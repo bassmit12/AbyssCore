@@ -1,0 +1,34 @@
+# Node / Next.js
+node_modules/
+.next/
+out/
+.env
+.env.local
+.env*.local
+npm-debug.log*
+
+# Go
+*.exe
+*.out
+/vendor/
+
+# Encore
+.encore/
+
+# Docker
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+*.pem
+*.key
+*.crt
+keycloak-init-done

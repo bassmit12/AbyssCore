@@ -1,0 +1,122 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: abysscore-postgres
+    environment:
+      POSTGRES_USER: abysscore
+      POSTGRES_PASSWORD: abysscore
+      POSTGRES_DB: abysscore
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/scripts/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abysscore"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: abysscore-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: abysscore
+      RABBITMQ_DEFAULT_PASS: abysscore
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: abysscore-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: dev-mem
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash /dev/tcp/localhost/8080 && echo ok || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  keycloak-init:
+    image: curlimages/curl:latest
+    container_name: abysscore-keycloak-init
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    volumes:
+      - ./infra/scripts/keycloak-init.sh:/keycloak-init.sh
+    entrypoint: ["sh", "/keycloak-init.sh"]
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      REALM: abysscore
+      CLIENT_ID: abysscore-frontend
+      TEST_USER: testplayer
+      TEST_PASSWORD: testpass
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: abysscore-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: abysscore-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.104.0
+    container_name: abysscore-otel
+    ports:
+      - "4317:4317"   # gRPC
+      - "4318:4318"   # HTTP
+      - "8889:8889"   # Prometheus exporter
+    volumes:
+      - ./infra/otel/otel-collector.yml:/etc/otel-collector.yml
+    command: ["--config=/etc/otel-collector.yml"]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    container_name: abysscore-jaeger
+    ports:
+      - "16686:16686"  # UI
+      - "14250:14250"  # gRPC collector
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  prometheus_data:
+  grafana_data:
