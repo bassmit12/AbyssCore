@@ -1,4 +1,4 @@
-package gateway
+package main
 
 // graphql-gateway: GraphQL API over all Encore services.
 // Phase 3 in PLAN.md
