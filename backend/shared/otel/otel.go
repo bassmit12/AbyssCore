@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -41,9 +41,9 @@ func Init(ctx context.Context, serviceName string) (shutdown func(), err error) 
 
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
-			semconv.ServiceName(serviceName),
-			semconv.ServiceVersion("0.1.0"),
-			semconv.DeploymentEnvironment("local"),
+			attribute.String("service.name", serviceName),
+			attribute.String("service.version", "0.1.0"),
+			attribute.String("deployment.environment", "local"),
 		),
 	)
 	if err != nil {
