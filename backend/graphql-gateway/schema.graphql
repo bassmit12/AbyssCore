@@ -1,0 +1,136 @@
+# AbyssCore GraphQL Schema
+
+scalar Time
+
+# ─── Auth ───────────────────────────────────────────────────────────────────
+
+type User {
+  id: ID!
+  email: String!
+  roles: [String!]!
+}
+
+# ─── Hero ───────────────────────────────────────────────────────────────────
+
+enum HeroClass {
+  WARRIOR
+  ROGUE
+  MAGE
+}
+
+type Hero {
+  id: ID!
+  name: String!
+  class: HeroClass!
+  hp: Int!
+  maxHp: Int!
+  level: Int!
+  xp: Int!
+  x: Int!
+  y: Int!
+  inventory: [Item!]!
+}
+
+# ─── Dungeon ────────────────────────────────────────────────────────────────
+
+type Room {
+  x: Int!
+  y: Int!
+  hasChest: Boolean!
+  exits: [String!]!
+  monsters: [Monster!]!
+}
+
+type Floor {
+  dungeonId: ID!
+  level: Int!
+  rooms: [[Room!]!]!
+}
+
+type Monster {
+  id: ID!
+  name: String!
+  hp: Int!
+  maxHp: Int!
+  damage: Int!
+  status: String!
+}
+
+# ─── Inventory ──────────────────────────────────────────────────────────────
+
+enum ItemType {
+  WEAPON
+  ARMOR
+  POTION
+}
+
+enum Rarity {
+  COMMON
+  UNCOMMON
+  RARE
+}
+
+type Item {
+  id: ID!
+  name: String!
+  type: ItemType!
+  value: Int!
+  rarity: Rarity!
+}
+
+# ─── Combat ─────────────────────────────────────────────────────────────────
+
+type CombatResult {
+  heroDamageDealt: Int!
+  monsterDamageBack: Int!
+  monsterDied: Boolean!
+  heroDied: Boolean!
+  message: String!
+}
+
+type CombatEvent {
+  heroId: ID!
+  monsterId: ID!
+  result: CombatResult!
+  timestamp: Time!
+}
+
+# ─── Leaderboard ────────────────────────────────────────────────────────────
+
+type Run {
+  heroId: ID!
+  heroName: String!
+  floorsCleared: Int!
+  monstersKilled: Int!
+  itemsFound: Int!
+  score: Int!
+}
+
+# ─── Queries ────────────────────────────────────────────────────────────────
+
+type Query {
+  me: User
+  hero(id: ID!): Hero
+  floor(dungeonId: ID!, level: Int!): Floor
+  inventory(heroId: ID!): [Item!]!
+  leaderboard: [Run!]!
+}
+
+# ─── Mutations ──────────────────────────────────────────────────────────────
+
+type Mutation {
+  createHero(name: String!, class: HeroClass!): Hero!
+  startDungeon(heroId: ID!): Floor!
+  moveHero(heroId: ID!, direction: String!): Hero!
+  attack(heroId: ID!, monsterId: ID!): CombatResult!
+  useItem(heroId: ID!, itemId: ID!): Hero!
+}
+
+# ─── Subscriptions ──────────────────────────────────────────────────────────
+
+type Subscription {
+  # Real-time combat log for a dungeon run
+  combatEvents(heroId: ID!): CombatEvent!
+  # Hero state updates (HP changes, level up, death)
+  heroUpdated(heroId: ID!): Hero!
+}

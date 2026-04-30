@@ -33,11 +33,11 @@
 ---
 
 ## Phase 2: Auth (Keycloak + Encore + Next.js)
-- [ ] **2.1** Keycloak realm + client config script (infra/scripts/keycloak-init.sh) — realm: abysscore, client: abysscore-frontend
-- [ ] **2.2** Encore auth-service: validate Keycloak JWT, expose user identity to other services
-- [ ] **2.3** Next.js: NextAuth.js with Keycloak provider, login/logout flow
-- [ ] **2.4** Protected route middleware in Next.js (redirect to Keycloak if no session)
-- [ ] **2.5** Pass JWT from frontend → GraphQL gateway → Encore services (auth header propagation)
+- [x] **2.1** Keycloak realm + client config script (infra/scripts/keycloak-init.sh) — realm: abysscore, client: abysscore-frontend
+- [x] **2.2** Encore auth-service: validate Keycloak JWT, expose user identity to other services
+- [x] **2.3** Next.js: NextAuth.js with Keycloak provider, login/logout flow
+- [x] **2.4** Protected route middleware in Next.js (redirect to Keycloak if no session)
+- [x] **2.5** Pass JWT from frontend → GraphQL gateway → Encore services (auth header propagation)
 
 ---
 
