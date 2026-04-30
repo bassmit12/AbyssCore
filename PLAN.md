@@ -23,12 +23,12 @@
 ---
 
 ## Phase 1: Project Scaffold (Local, no cluster needed)
-- [ ] **1.1** Create folder structure (frontend/, backend/, infra/, docs/)
-- [ ] **1.2** Init Next.js app in frontend/ (TypeScript, App Router, Tailwind)
-- [ ] **1.3** Init Encore.go workspace in backend/ with encore.app
-- [ ] **1.4** Create backend services: game-service, dungeon-service, combat-service, inventory-service, leaderboard-service, auth-service
-- [ ] **1.5** Create docker-compose.yml for local dev: Postgres, RabbitMQ, Keycloak
-- [ ] **1.6** Init git repo, add .gitignore, first commit
+- [x] **1.1** Create folder structure (frontend/, backend/, infra/, docs/)
+- [x] **1.2** Init Next.js app in frontend/ (TypeScript, App Router, Tailwind)
+- [x] **1.3** Init Encore.go workspace in backend/ with encore.app
+- [x] **1.4** Create backend services: game-service, dungeon-service, combat-service, inventory-service, leaderboard-service, auth-service
+- [x] **1.5** Create docker-compose.yml for local dev: Postgres, RabbitMQ, Keycloak, Prometheus, Grafana, OTEL, Jaeger
+- [x] **1.6** Init git repo, add .gitignore, first commit
 
 ---
 
