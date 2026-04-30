@@ -53,35 +53,35 @@
 ## Phase 4: Core Game Services (Encore.go)
 
 ### 4A: Dungeon Service
-- [ ] **4.1** Postgres schema: dungeons, floors, rooms, room_connections
-- [ ] **4.2** Procedural floor generator: grid of rooms, random connections, place monsters + loot
-- [ ] **4.3** API endpoint: POST /dungeon/start (creates dungeon + first floor for a player)
-- [ ] **4.4** API endpoint: GET /dungeon/:id/floor/:n (returns floor layout + entities)
-- [ ] **4.5** Publish event `dungeon.floor.entered` to RabbitMQ on floor entry
+- [x] **4.1** Postgres schema: dungeons, floors, rooms, room_connections
+- [x] **4.2** Procedural floor generator: grid of rooms, random connections, place monsters + loot
+- [x] **4.3** API endpoint: POST /dungeon/start (creates dungeon + first floor for a player)
+- [x] **4.4** API endpoint: GET /dungeon/:id/floor/:n (returns floor layout + entities)
+- [x] **4.5** Publish event `dungeon.floor.entered` to RabbitMQ on floor entry
 
 ### 4B: Game Service (player state)
-- [ ] **4.6** Postgres schema: heroes (id, player_id, name, class, hp, max_hp, level, xp, position)
-- [ ] **4.7** API: POST /hero/create
-- [ ] **4.8** API: POST /hero/:id/move (validate move, update position, publish `dungeon.player.moved`)
-- [ ] **4.9** Consume `combat.monster.killed` → award XP, check level up
+- [x] **4.6** Postgres schema: heroes (id, player_id, name, class, hp, max_hp, level, xp, position)
+- [x] **4.7** API: POST /hero/create
+- [x] **4.8** API: POST /hero/:id/move (validate move, update position, publish `dungeon.player.moved`)
+- [x] **4.9** Consume `combat.monster.killed` → award XP, check level up
 
 ### 4C: Combat Service
-- [ ] **4.10** Postgres schema: monsters (id, floor_id, name, hp, max_hp, damage, status)
-- [ ] **4.11** API: POST /combat/attack (hero attacks monster, resolve damage)
-- [ ] **4.12** Publish `combat.attack.initiated`, consume and publish `combat.result`
-- [ ] **4.13** On monster death: publish `combat.monster.killed`
-- [ ] **4.14** On hero death: publish `game.player.died`, save run stats
+- [x] **4.10** Postgres schema: monsters (id, floor_id, name, hp, max_hp, damage, status)
+- [x] **4.11** API: POST /combat/attack (hero attacks monster, resolve damage)
+- [x] **4.12** Publish `combat.attack.initiated`, consume and publish `combat.result`
+- [x] **4.13** On monster death: publish `combat.monster.killed`
+- [x] **4.14** On hero death: publish `game.player.died`, save run stats
 
 ### 4D: Inventory Service
-- [ ] **4.15** Postgres schema: items, hero_inventory
-- [ ] **4.16** Item definitions: sword, shield, potion, armor tiers
-- [ ] **4.17** Consume `combat.monster.killed` → roll loot drop, insert to hero_inventory
-- [ ] **4.18** API: GET /inventory/:hero_id, POST /inventory/use/:item_id
+- [x] **4.15** Postgres schema: items, hero_inventory
+- [x] **4.16** Item definitions: sword, shield, potion, armor tiers
+- [x] **4.17** Consume `combat.monster.killed` → roll loot drop, insert to hero_inventory
+- [x] **4.18** API: GET /inventory/:hero_id, POST /inventory/use/:item_id
 
 ### 4E: Leaderboard Service
-- [ ] **4.19** Postgres schema: runs (hero_id, floors_cleared, monsters_killed, items_found, score, died_at)
-- [ ] **4.20** Consume `game.player.died` → finalize run, calculate score
-- [ ] **4.21** API: GET /leaderboard (top 10 runs)
+- [x] **4.19** Postgres schema: runs (hero_id, floors_cleared, monsters_killed, items_found, score, died_at)
+- [x] **4.20** Consume `game.player.died` → finalize run, calculate score
+- [x] **4.21** API: GET /leaderboard (top 10 runs)
 
 ---
 

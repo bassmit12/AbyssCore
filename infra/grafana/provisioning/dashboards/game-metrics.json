@@ -1,0 +1,51 @@
+{
+  "uid": "abysscore-game",
+  "title": "AbyssCore — Game Metrics",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Active Players per Floor",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "expr": "active_players_per_floor", "legendFormat": "Floor {{floor}}" }]
+    },
+    {
+      "id": 2,
+      "title": "Combat Events / sec",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [{ "expr": "rate(combat_events_total[1m])", "legendFormat": "{{type}}" }]
+    },
+    {
+      "id": 3,
+      "title": "Deaths Total",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "targets": [{ "expr": "hero_deaths_total", "legendFormat": "Deaths" }]
+    },
+    {
+      "id": 4,
+      "title": "Monsters Killed",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 4, "w": 6, "h": 4 },
+      "targets": [{ "expr": "monsters_killed_total", "legendFormat": "Kills" }]
+    },
+    {
+      "id": 5,
+      "title": "Loot Drops by Rarity",
+      "type": "piechart",
+      "gridPos": { "x": 18, "y": 4, "w": 6, "h": 4 },
+      "targets": [{ "expr": "loot_drops_total", "legendFormat": "{{rarity}}" }]
+    },
+    {
+      "id": 6,
+      "title": "RabbitMQ Queue Depth",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 },
+      "targets": [{ "expr": "rabbitmq_queue_messages", "legendFormat": "{{queue}}" }]
+    }
+  ]
+}

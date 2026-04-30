@@ -83,6 +83,7 @@ func Attack(ctx context.Context, req *AttackRequest) (*CombatResult, error) {
 		return nil, err
 	}
 
+	metrics.CombatEventsTotal.WithLabelValues("hit").Inc()
 	publishEvent(ctx, "combat.attack.initiated", map[string]any{
 		"hero_id": req.HeroID, "monster_id": req.MonsterID,
 	})
@@ -141,6 +142,8 @@ func Attack(ctx context.Context, req *AttackRequest) (*CombatResult, error) {
 	})
 
 	if monsterDied {
+		metrics.MonstersKilledTotal.Inc()
+		metrics.CombatEventsTotal.WithLabelValues("kill").Inc()
 		xpReward := monster.MaxHP / 2
 		publishEvent(ctx, "combat.monster.killed", map[string]any{
 			"hero_id":    req.HeroID,
@@ -150,6 +153,8 @@ func Attack(ctx context.Context, req *AttackRequest) (*CombatResult, error) {
 	}
 
 	if heroDied {
+		metrics.HeroDeathsTotal.Inc()
+		metrics.CombatEventsTotal.WithLabelValues("death").Inc()
 		publishEvent(ctx, "game.player.died", map[string]any{
 			"hero_id": req.HeroID,
 		})
