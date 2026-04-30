@@ -42,11 +42,11 @@
 ---
 
 ## Phase 3: GraphQL Gateway
-- [ ] **3.1** Set up graphql-gateway service (Go, gqlgen)
-- [ ] **3.2** Define schema: Hero, DungeonFloor, Room, Monster, Item, CombatEvent, Leaderboard
-- [ ] **3.3** Wire resolvers to Encore service HTTP endpoints
-- [ ] **3.4** Add GraphQL subscriptions (WebSocket) for real-time combat log + floor state
-- [ ] **3.5** Auth middleware: extract JWT, inject user identity into resolver context
+- [x] **3.1** Set up graphql-gateway service (Go, gqlgen)
+- [x] **3.2** Define schema: Hero, DungeonFloor, Room, Monster, Item, CombatEvent, Leaderboard
+- [x] **3.3** Wire resolvers to Encore service HTTP endpoints
+- [x] **3.4** Add GraphQL subscriptions (WebSocket) for real-time combat log + floor state
+- [x] **3.5** Auth middleware: extract JWT, inject user identity into resolver context
 
 ---
 
