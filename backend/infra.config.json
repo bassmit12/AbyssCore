@@ -1,0 +1,24 @@
+{
+  "metadata": {
+    "app_id": "abysscore",
+    "env_name": "production",
+    "env_type": "production",
+    "cloud": "self-hosted",
+    "base_url": "http://abysscore-backend:4000"
+  },
+  "sql_servers": [
+    {
+      "host": "postgres:5432",
+      "tls_config": { "disabled": true },
+      "databases": {
+        "combat":      { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
+        "deck":        { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
+        "dungeon":     { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
+        "game":        { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
+        "inventory":   { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
+        "leaderboard": { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
+        "map":         { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} }
+      }
+    }
+  ]
+}

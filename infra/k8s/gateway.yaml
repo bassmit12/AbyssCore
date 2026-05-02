@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: abysscore-gateway
+  namespace: abysscore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: abysscore-gateway
+  template:
+    metadata:
+      labels:
+        app: abysscore-gateway
+    spec:
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: gateway
+        image: ghcr.io/bassmit12/abysscore-gateway:latest
+        env:
+        - name: ENCORE_BASE_URL
+          value: http://abysscore-backend:4000
+        ports:
+        - containerPort: 4001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: abysscore-gateway
+  namespace: abysscore
+spec:
+  type: NodePort
+  selector:
+    app: abysscore-gateway
+  ports:
+  - port: 4001
+    targetPort: 4001
+    nodePort: 30001

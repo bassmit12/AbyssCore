@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-init-script
+  namespace: abysscore
+data:
+  init.sh: |
+    #!/bin/bash
+    set -e
+    echo "Waiting for Keycloak..."
+    until /opt/keycloak/bin/kcadm.sh config credentials --server http://keycloak:8080 --realm master --user admin --password admin 2>/dev/null; do
+      sleep 5
+    done
+    echo "Keycloak ready, creating realm..."
+    /opt/keycloak/bin/kcadm.sh create realms -s realm=abysscore -s enabled=true || echo "Realm exists"
+    /opt/keycloak/bin/kcadm.sh create clients -r abysscore -s clientId=abysscore-frontend -s publicClient=true -s 'redirectUris=["*"]' -s 'webOrigins=["*"]' -s enabled=true || echo "Client exists"
+    echo "Done"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keycloak-realm-init
+  namespace: abysscore
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: init
+        image: quay.io/keycloak/keycloak:24.0.0
+        command: ["/bin/bash", "/scripts/init.sh"]
+        volumeMounts:
+        - name: script
+          mountPath: /scripts
+        env:
+        - name: JAVA_OPTS_APPEND
+          value: "-Dcom.redhat.fips=false"
+      volumes:
+      - name: script
+        configMap:
+          name: keycloak-init-script
+          defaultMode: 0755

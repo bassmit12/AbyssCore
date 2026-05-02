@@ -1,0 +1,91 @@
+name: Build and Push Images
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: bassmit12
+
+jobs:
+  build-backend:
+    name: Build Backend (Encore)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Encore CLI
+        run: |
+          curl -L https://encore.dev/install.sh | bash
+          echo "$HOME/.encore/bin" >> $GITHUB_PATH
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        working-directory: backend
+        run: |
+          encore build docker \
+            --config infra.config.json \
+            --push \
+            ghcr.io/${{ env.OWNER }}/abysscore-backend:latest
+
+  build-gateway:
+    name: Build Gateway
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push gateway image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./graphql-gateway
+          push: true
+          tags: ghcr.io/${{ env.OWNER }}/abysscore-gateway:latest
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ghcr.io/${{ env.OWNER }}/abysscore-frontend:latest
+          build-args: |
+            NEXT_PUBLIC_GRAPHQL_URL=${{ vars.NEXT_PUBLIC_GRAPHQL_URL }}
+            NEXT_PUBLIC_KEYCLOAK_URL=${{ vars.NEXT_PUBLIC_KEYCLOAK_URL }}
+            NEXT_PUBLIC_KEYCLOAK_REALM=${{ vars.NEXT_PUBLIC_KEYCLOAK_REALM }}
+            NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${{ vars.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }}

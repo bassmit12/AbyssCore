@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-scripts
+  namespace: abysscore
+data:
+  01-schemas.sql: |
+    CREATE SCHEMA IF NOT EXISTS game;
+    CREATE SCHEMA IF NOT EXISTS dungeon;
+    CREATE SCHEMA IF NOT EXISTS combat;
+    CREATE SCHEMA IF NOT EXISTS inventory;
+    CREATE SCHEMA IF NOT EXISTS leaderboard;
+  02-keycloak-db.sql: |
+    SELECT 'CREATE DATABASE keycloak OWNER abysscore'
+    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'keycloak')\gexec
