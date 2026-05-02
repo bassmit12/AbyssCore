@@ -31,13 +31,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push backend image
+      - name: Build backend image
         working-directory: backend
         run: |
           encore build docker \
             --config infra.config.json \
-            --push \
             ghcr.io/${{ env.OWNER }}/abysscore-backend:latest
+
+      - name: Push backend image
+        run: docker push ghcr.io/${{ env.OWNER }}/abysscore-backend:latest
 
   build-gateway:
     name: Build Gateway
