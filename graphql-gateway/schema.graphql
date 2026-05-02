@@ -1,8 +1,8 @@
-# AbyssCore GraphQL Schema
+# AbyssCore GraphQL Schema — Slay the Spire edition
 
 scalar Time
 
-# ─── Auth ───────────────────────────────────────────────────────────────────
+# ─── Auth ────────────────────────────────────────────────────────────────────
 
 type User {
   id: ID!
@@ -10,7 +10,7 @@ type User {
   roles: [String!]!
 }
 
-# ─── Hero ───────────────────────────────────────────────────────────────────
+# ─── Hero ────────────────────────────────────────────────────────────────────
 
 enum HeroClass {
   WARRIOR
@@ -26,111 +26,259 @@ type Hero {
   maxHp: Int!
   level: Int!
   xp: Int!
-  x: Int!
-  y: Int!
-  inventory: [Item!]!
+  gold: Int!
+  alive: Boolean!
+  runId: ID
 }
 
-# ─── Dungeon ────────────────────────────────────────────────────────────────
+# ─── Map / Run ───────────────────────────────────────────────────────────────
 
-type Room {
-  x: Int!
-  y: Int!
-  hasChest: Boolean!
-  exits: [String!]!
-  monsters: [Monster!]!
+enum NodeType {
+  COMBAT
+  ELITE
+  BOSS
+  REST
+  SHOP
+  TREASURE
+  EVENT
 }
 
-type Floor {
-  dungeonId: ID!
-  level: Int!
-  rooms: [[Room!]!]!
-}
-
-type Monster {
+type MapNode {
   id: ID!
-  name: String!
-  hp: Int!
-  maxHp: Int!
-  damage: Int!
-  status: String!
+  floor: Int!
+  position: Int!
+  type: NodeType!
+  visited: Boolean!
+  available: Boolean!
 }
 
-# ─── Inventory ──────────────────────────────────────────────────────────────
-
-enum ItemType {
-  WEAPON
-  ARMOR
-  POTION
+type MapEdge {
+  fromNodeId: ID!
+  toNodeId: ID!
 }
 
-enum Rarity {
+type FloorGraph {
+  runId: ID!
+  heroId: ID!
+  currentNodeId: ID
+  nodes: [MapNode!]!
+  edges: [MapEdge!]!
+}
+
+type Run {
+  id: ID!
+  heroId: ID!
+  heroName: String!
+  playerName: String!
+  floorsCleared: Int!
+  monstersKilled: Int!
+  score: Int!
+}
+
+# ─── Card Combat ─────────────────────────────────────────────────────────────
+
+enum CardType {
+  ATTACK
+  SKILL
+  POWER
+  STATUS
+  CURSE
+}
+
+enum CardRarity {
   COMMON
   UNCOMMON
   RARE
 }
 
-type Item {
+type Card {
   id: ID!
+  defId: ID!
   name: String!
-  type: ItemType!
-  value: Int!
-  rarity: Rarity!
+  cost: Int!
+  type: CardType!
+  effect: String!
 }
 
-# ─── Combat ─────────────────────────────────────────────────────────────────
+type CardDefinition {
+  id: ID!
+  name: String!
+  class: String!
+  type: CardType!
+  cost: Int!
+  effect: String!
+  rarity: CardRarity!
+  description: String!
+}
 
-type CombatResult {
-  heroDamageDealt: Int!
-  monsterDamageBack: Int!
-  monsterDied: Boolean!
-  heroDied: Boolean!
+type HeroDeck {
+  heroId: ID!
+  cards: [Card!]!
+}
+
+# ─── Relics ──────────────────────────────────────────────────────────────────
+
+type Relic {
+  id: ID!
+  defId: ID!
+  name: String!
+  rarity: String!
+  description: String!
+}
+
+# ─── Encounter (card combat) ─────────────────────────────────────────────────
+
+type EncounterMonster {
+  id: ID!
+  name: String!
+  hp: Int!
+  maxHp: Int!
+  block: Int!
+  status: String!
+  intents: [MonsterIntent!]!
+}
+
+type MonsterIntent {
+  type: String!
+  value: Int!
+}
+
+type HeroCombatState {
+  hp: Int!
+  maxHp: Int!
+  block: Int!
+  energy: Int!
+  maxEnergy: Int!
+  hand: [Card!]!
+  drawPileCount: Int!
+  discardPileCount: Int!
+  statuses: [StatusEffect!]!
+}
+
+type StatusEffect {
+  name: String!
+  stacks: Int!
+}
+
+type EncounterState {
+  encounterId: ID!
+  heroState: HeroCombatState!
+  monsters: [EncounterMonster!]!
+  turnNumber: Int!
+  status: String!
   message: String!
 }
 
-type CombatEvent {
-  heroId: ID!
-  monsterId: ID!
-  result: CombatResult!
-  timestamp: Time!
+type CardRewards {
+  encounterId: ID!
+  cards: [CardDefinition!]!
 }
 
-# ─── Leaderboard ────────────────────────────────────────────────────────────
-
-type Run {
-  heroId: ID!
-  heroName: String!
-  floorsCleared: Int!
-  monstersKilled: Int!
-  itemsFound: Int!
-  score: Int!
+type ShopInventory {
+  items: [ShopItem!]!
 }
 
-# ─── Queries ────────────────────────────────────────────────────────────────
+type ShopItem {
+  cardDef: CardDefinition!
+  price: Int!
+}
+
+# ─── Inventory ────────────────────────────────────────────────────────────────
+
+type InventoryItem {
+  id: ID!
+  name: String!
+  type: String!
+  value: Int!
+  rarity: String!
+  description: String!
+}
+
+type HeroInventory {
+  heroId: ID!
+  items: [InventoryItem!]!
+}
+
+# ─── Random Events ────────────────────────────────────────────────────────────
+
+type EventChoice {
+  id: ID!
+  label: String!
+  description: String!
+}
+
+type RandomEvent {
+  id: ID!
+  title: String!
+  description: String!
+  choices: [EventChoice!]!
+}
+
+type EventOutcome {
+  choiceId: String!
+  description: String!
+  goldDelta: Int!
+  hpDelta: Int!
+}
+
+# ─── Leaderboard ─────────────────────────────────────────────────────────────
+
+# (Run type above serves as leaderboard entry)
+
+# ─── Queries ─────────────────────────────────────────────────────────────────
 
 type Query {
   me: User
   hero(id: ID!): Hero
-  floor(dungeonId: ID!, level: Int!): Floor
-  inventory(heroId: ID!): [Item!]!
+  floorGraph(heroId: ID!): FloorGraph
+  heroDeck(heroId: ID!): HeroDeck
+  heroRelics(heroId: ID!): [Relic!]!
+  encounterState(encounterId: ID!): EncounterState
+  cardRewards(heroId: ID!): CardRewards!
+  shopCards(heroId: ID!): ShopInventory!
+  heroInventory(heroId: ID!): HeroInventory!
+  randomEvent: RandomEvent!
   leaderboard: [Run!]!
 }
 
-# ─── Mutations ──────────────────────────────────────────────────────────────
+# ─── Mutations ───────────────────────────────────────────────────────────────
 
 type Mutation {
+  # Hero lifecycle
   createHero(name: String!, class: HeroClass!): Hero!
-  startDungeon(heroId: ID!): Floor!
-  moveHero(heroId: ID!, direction: String!): Hero!
-  attack(heroId: ID!, monsterId: ID!): CombatResult!
-  useItem(heroId: ID!, itemId: ID!): Hero!
+
+  # Run / map
+  startRun(heroId: ID!): FloorGraph!
+  travelToNode(heroId: ID!, nodeId: ID!): FloorGraph!
+
+  # Card combat
+  startEncounter(heroId: ID!, nodeId: ID!): EncounterState!
+  playCard(encounterId: ID!, heroId: ID!, cardId: ID!, targetId: ID): EncounterState!
+  endTurn(encounterId: ID!, heroId: ID!): EncounterState!
+
+  # Post-combat
+  pickCardReward(encounterId: ID!, heroId: ID!, cardDefId: ID!): HeroDeck!
+  skipCardReward(encounterId: ID!, heroId: ID!): Boolean!
+
+  # Rest site
+  rest(heroId: ID!, nodeId: ID!, action: String!): Hero!
+
+  # Shop
+  buyCard(heroId: ID!, cardDefId: ID!, price: Int!): Hero!
+
+  # Inventory
+  useItem(heroId: ID!, itemId: ID!): Boolean!
+
+  # Events
+  resolveEvent(heroId: ID!, eventId: ID!, choiceId: ID!): EventOutcome!
+
+  # Leaderboard
+  submitScore(heroId: ID!): Run!
 }
 
-# ─── Subscriptions ──────────────────────────────────────────────────────────
+# ─── Subscriptions ───────────────────────────────────────────────────────────
 
 type Subscription {
-  # Real-time combat log for a dungeon run
-  combatEvents(heroId: ID!): CombatEvent!
-  # Hero state updates (HP changes, level up, death)
+  encounterUpdated(encounterId: ID!): EncounterState!
   heroUpdated(heroId: ID!): Hero!
 }

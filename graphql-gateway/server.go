@@ -2,34 +2,38 @@ package main
 
 import (
 	"net/http"
+	"os"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/gorilla/websocket"
+	"github.com/graph-gophers/graphql-go"
+	"github.com/graph-gophers/graphql-go/relay"
 )
 
-// NewServer builds the GraphQL HTTP handler with WebSocket subscription support.
-func NewServer() http.Handler {
-	// TODO: wire gqlgen ExecutableSchema once codegen runs (Phase 3 final step)
-	// For now returns a placeholder - replace with:
-	//   srv := handler.New(NewExecutableSchema(Config{Resolvers: &Resolver{}}))
-	srv := handler.NewDefaultServer(nil)
-
-	// WebSocket transport for subscriptions
-	srv.AddTransport(&transport.Websocket{
-		Upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool { return true },
-		},
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
 	})
-
-	mux := http.NewServeMux()
-	mux.Handle("/graphql", authMiddleware(srv))
-	mux.Handle("/playground", playgroundHandler())
-
-	return mux
 }
 
-func playgroundHandler() http.Handler {
-	return playground.Handler("AbyssCore GraphQL", "/graphql")
+func NewServer() http.Handler {
+	schemaBytes, err := os.ReadFile("schema.graphql")
+	if err != nil {
+		panic("could not read schema.graphql: " + err.Error())
+	}
+
+	schema := graphql.MustParseSchema(string(schemaBytes), &Resolver{},
+		graphql.UseFieldResolvers(),
+	)
+
+	mux := http.NewServeMux()
+	mux.Handle("/graphql", authMiddleware(&relay.Handler{Schema: schema}))
+	mux.Handle("/playground", playgroundHandler())
+
+	return corsMiddleware(mux)
 }

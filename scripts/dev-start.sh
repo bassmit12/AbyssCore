@@ -23,12 +23,12 @@ cat > "$ROOT/frontend/.env.local" <<'EOF'
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=dev-secret-change-in-prod
 
-KEYCLOAK_ID=abysscore-frontend
-KEYCLOAK_SECRET=abysscore-secret
+KEYCLOAK_CLIENT_ID=abysscore-frontend
+KEYCLOAK_CLIENT_SECRET=abysscore-secret
 KEYCLOAK_ISSUER=http://localhost:8080/realms/abysscore
 
-NEXT_PUBLIC_GRAPHQL_URL=http://localhost:4000/graphql
-NEXT_PUBLIC_GRAPHQL_WS_URL=ws://localhost:4000/graphql
+NEXT_PUBLIC_GRAPHQL_URL=http://localhost:4001/graphql
+NEXT_PUBLIC_GRAPHQL_WS_URL=ws://localhost:4001/graphql
 EOF
 ok "frontend/.env.local written"
 
@@ -74,7 +74,7 @@ echo -e "${GREEN}  AbyssCore local dev stack is running!${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════${NC}"
 echo ""
 echo -e "  Game:         ${CYAN}http://localhost:3000${NC}"
-echo -e "  GraphQL:      ${CYAN}http://localhost:4000/graphql${NC}"
+echo -e "  GraphQL:      ${CYAN}http://localhost:4001/graphql${NC}"
 echo -e "  Keycloak:     ${CYAN}http://localhost:8080${NC}"
 echo -e "  RabbitMQ UI:  ${CYAN}http://localhost:15672${NC}  (guest/guest)"
 echo -e "  Prometheus:   ${CYAN}http://localhost:9090${NC}"

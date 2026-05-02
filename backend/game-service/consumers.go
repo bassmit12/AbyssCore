@@ -8,7 +8,6 @@ import (
 	"encore.dev/beta/errs"
 	"encore.app/shared/events"
 
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // StartConsumers wires up all RabbitMQ consumers for game-service.

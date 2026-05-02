@@ -15,11 +15,12 @@ var db = sqldb.NewDatabase("dungeon", sqldb.DatabaseConfig{
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type Room struct {
-	X        int      `json:"x"`
-	Y        int      `json:"y"`
-	HasChest bool     `json:"has_chest"`
-	Exits    []string `json:"exits"`
-	Monsters []string `json:"monsters"` // monster IDs, populated by combat-service
+	X           int      `json:"x"`
+	Y           int      `json:"y"`
+	HasChest    bool     `json:"has_chest"`
+	ChestOpened bool     `json:"chest_opened"`
+	Exits       []string `json:"exits"`
+	Monsters    []string `json:"monsters"` // monster IDs, populated by combat-service
 }
 
 type Floor struct {
@@ -36,7 +37,7 @@ type StartDungeonRequest struct {
 
 // StartDungeon creates a dungeon run and generates floor 1.
 //
-//encore:api auth method=POST path=/dungeon/start
+//encore:api auth method=POST path=/runs/new
 func StartDungeon(ctx context.Context, req *StartDungeonRequest) (*Floor, error) {
 	// Create dungeon record
 	var dungeonID string
@@ -83,6 +84,65 @@ func GetFloor(ctx context.Context, dungeonID string, level int) (*Floor, error) 
 		Level:     level,
 		Rooms:     rooms,
 	}, nil
+}
+
+type OpenChestRequest struct {
+	HeroID    string `json:"hero_id"`
+	DungeonID string `json:"dungeon_id"`
+	X         int    `json:"x"`
+	Y         int    `json:"y"`
+}
+
+type OpenChestResponse struct {
+	ItemFound bool   `json:"item_found"`
+	Message   string `json:"message"`
+}
+
+// OpenChest opens a chest in the current room, granting loot to the hero.
+//
+//encore:api auth method=POST path=/dungeon/:dungeonID/chest
+func OpenChest(ctx context.Context, dungeonID string, req *OpenChestRequest) (*OpenChestResponse, error) {
+	// Find the current floor
+	var floorID string
+	err := db.QueryRow(ctx, `
+		SELECT id FROM dungeon.floors WHERE dungeon_id = $1::uuid ORDER BY level DESC LIMIT 1
+	`, dungeonID).Scan(&floorID)
+	if err != nil {
+		return nil, fmt.Errorf("floor not found: %w", err)
+	}
+
+	// Check room has an unopened chest
+	var hasChest, chestOpened bool
+	err = db.QueryRow(ctx, `
+		SELECT has_chest, chest_opened FROM dungeon.rooms WHERE floor_id = $1::uuid AND x = $2 AND y = $3
+	`, floorID, req.X, req.Y).Scan(&hasChest, &chestOpened)
+	if err != nil {
+		return nil, fmt.Errorf("room not found: %w", err)
+	}
+	if !hasChest {
+		return &OpenChestResponse{ItemFound: false, Message: "There is no chest here."}, nil
+	}
+	if chestOpened {
+		return &OpenChestResponse{ItemFound: false, Message: "This chest has already been opened."}, nil
+	}
+
+	// Mark chest as opened
+	_, err = db.Exec(ctx, `
+		UPDATE dungeon.rooms SET chest_opened = TRUE WHERE floor_id = $1::uuid AND x = $2 AND y = $3
+	`, floorID, req.X, req.Y)
+	if err != nil {
+		return nil, fmt.Errorf("mark chest opened: %w", err)
+	}
+
+	// Publish event — inventory-service will roll loot and add to hero's bag
+	publishEvent(ctx, "dungeon.chest.opened", map[string]any{
+		"hero_id":    req.HeroID,
+		"dungeon_id": dungeonID,
+		"x":          req.X,
+		"y":          req.Y,
+	})
+
+	return &OpenChestResponse{ItemFound: true, Message: "You open the chest and find something inside!"}, nil
 }
 
 // DescendFloor generates the next floor when the hero reaches the stairs.
@@ -224,7 +284,7 @@ func spawnMonsters(ctx context.Context, floorID string, rooms [][]Room, level in
 
 func loadRooms(ctx context.Context, floorID string) ([][]Room, error) {
 	rows, err := db.Query(ctx, `
-		SELECT x, y, has_chest, exits FROM dungeon.rooms WHERE floor_id = $1::uuid ORDER BY y, x
+		SELECT x, y, has_chest, chest_opened, exits FROM dungeon.rooms WHERE floor_id = $1::uuid ORDER BY y, x
 	`, floorID)
 	if err != nil {
 		return nil, err
@@ -239,7 +299,7 @@ func loadRooms(ctx context.Context, floorID string) ([][]Room, error) {
 	for rows.Next() {
 		var r Room
 		var exits []string
-		if err := rows.Scan(&r.X, &r.Y, &r.HasChest, &exits); err != nil {
+		if err := rows.Scan(&r.X, &r.Y, &r.HasChest, &r.ChestOpened, &exits); err != nil {
 			return nil, err
 		}
 		r.Exits = exits
@@ -248,6 +308,3 @@ func loadRooms(ctx context.Context, floorID string) ([][]Room, error) {
 	return grid, rows.Err()
 }
 
-func publishEvent(ctx context.Context, routingKey string, payload map[string]any) {
-	// TODO: Phase 5 - RabbitMQ
-}

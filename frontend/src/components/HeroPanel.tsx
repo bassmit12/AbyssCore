@@ -7,6 +7,7 @@ interface Hero {
   maxHp: number
   level: number
   xp: number
+  gold?: number
   alive: boolean
 }
 
@@ -62,6 +63,11 @@ export default function HeroPanel({ hero }: Props) {
           />
         </div>
       </div>
+
+      {/* Gold */}
+      {hero.gold !== undefined && (
+        <div className="mt-2 text-sm text-yellow-400 font-semibold">🪙 {hero.gold} gold</div>
+      )}
 
       {!hero.alive && (
         <div className="mt-3 text-center text-red-400 font-bold text-sm border border-red-800 rounded py-1">

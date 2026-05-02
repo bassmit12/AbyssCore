@@ -159,7 +159,7 @@
 | Service         | Port  |
 |----------------|-------|
 | Frontend        | 3000  |
-| GraphQL gateway | 4000  |
+| GraphQL gateway | 4001  |
 | Keycloak        | 8080  |
 | RabbitMQ AMQP   | 5672  |
 | RabbitMQ UI     | 15672 |

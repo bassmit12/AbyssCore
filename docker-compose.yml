@@ -43,7 +43,15 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_DB: dev-mem
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: abysscore
+      KC_DB_PASSWORD: abysscore
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "8080:8080"
     healthcheck:

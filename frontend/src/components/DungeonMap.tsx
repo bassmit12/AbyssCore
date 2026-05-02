@@ -1,11 +1,21 @@
 "use client"
 
+interface Monster {
+  id: string
+  name: string
+  hp: number
+  maxHp: number
+  damage: number
+  status: string
+}
+
 interface Room {
   x: number
   y: number
   hasChest: boolean
+  chestOpened: boolean
   exits: string[]
-  monsters: string[]
+  monsters: Monster[]
 }
 
 interface Floor {
@@ -25,11 +35,12 @@ interface Props {
   floor?: Floor
   hero?: Hero
   onAttack: (monsterId: string) => void
+  onOpenChest: (x: number, y: number) => void
 }
 
 const CELL = 48
 
-export default function DungeonMap({ floor, hero, onAttack }: Props) {
+export default function DungeonMap({ floor, hero, onAttack, onOpenChest }: Props) {
   if (!floor) {
     return <div className="text-gray-600 text-sm">Generating floor...</div>
   }
@@ -45,8 +56,7 @@ export default function DungeonMap({ floor, hero, onAttack }: Props) {
       >
         {rows.map((row, y) =>
           row.map((room, x) => {
-            if (!room || (!room.exits && !room.hasChest && !room.monsters?.length)) {
-              // Empty cell (wall)
+            if (!room || (!room.exits?.length && !room.hasChest && !room.monsters?.length)) {
               return (
                 <div
                   key={`${x}-${y}`}
@@ -64,6 +74,7 @@ export default function DungeonMap({ floor, hero, onAttack }: Props) {
 
             const isHere = hero && hero.x === x && hero.y === y
             const hasMonster = room.monsters && room.monsters.length > 0
+            const hasUnopenedChest = room.hasChest && !room.chestOpened
 
             return (
               <div
@@ -75,30 +86,36 @@ export default function DungeonMap({ floor, hero, onAttack }: Props) {
                   width: CELL,
                   height: CELL,
                 }}
-                className={`border border-gray-700 flex items-center justify-center text-lg cursor-default
-                  ${hasMonster ? "bg-red-950 hover:bg-red-900 cursor-pointer" : "bg-gray-800"}
+                className={`border border-gray-700 flex items-center justify-center text-lg cursor-default relative
+                  ${hasMonster ? "bg-red-950" : "bg-gray-800"}
                 `}
-                onClick={() => {
-                  if (hasMonster && isHere) {
-                    onAttack(room.monsters[0])
-                  }
-                }}
                 title={
                   hasMonster
-                    ? isHere
-                      ? "Click to attack!"
-                      : "Monster lurks here"
+                    ? isHere ? "Click to attack!" : "Monster lurks here"
+                    : hasUnopenedChest
+                    ? isHere ? "Click chest to open!" : "Chest nearby"
                     : room.hasChest
-                    ? "Chest"
+                    ? "Chest (opened)"
                     : "Room"
                 }
+                onClick={() => {
+                  if (isHere) {
+                    if (hasMonster) {
+                      onAttack(room.monsters[0].id)
+                    } else if (hasUnopenedChest) {
+                      onOpenChest(x, y)
+                    }
+                  }
+                }}
               >
                 {isHere ? (
                   <span className="text-purple-400 drop-shadow-lg">⚔</span>
                 ) : hasMonster ? (
                   <span className="text-red-400">☠</span>
+                ) : hasUnopenedChest ? (
+                  <span className="text-yellow-400 animate-pulse">📦</span>
                 ) : room.hasChest ? (
-                  <span className="text-yellow-400">⬡</span>
+                  <span className="text-gray-500">🗃</span>
                 ) : (
                   <span className="text-gray-700 text-xs">{room.exits?.includes("south") ? "↓" : ""}</span>
                 )}

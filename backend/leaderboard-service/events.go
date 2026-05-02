@@ -39,6 +39,12 @@ func consumePlayerDied() {
 			d.Nack(false, false)
 			continue
 		}
+		// Drop malformed messages that would cause a DB error
+		if payload.HeroID == "" || payload.PlayerID == "" {
+			log.Printf("[leaderboard-service] dropping event: missing hero_id or player_id")
+			d.Nack(false, false)
+			continue
+		}
 		ctx := context.Background()
 		run, err := FinalizeRun(ctx, &FinalizeRunRequest{
 			HeroID:         payload.HeroID,

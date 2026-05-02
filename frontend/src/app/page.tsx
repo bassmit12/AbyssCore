@@ -1,7 +1,7 @@
 "use client"
-import { useSession, signIn } from "next-auth/react"
+import { useSession, signIn, signOut } from "next-auth/react"
 import { useState } from "react"
-import { useMutation } from "@apollo/client"
+import { useMutation } from "@apollo/client/react"
 import { CREATE_HERO } from "@/lib/queries"
 import GameView from "@/components/GameView"
 
@@ -12,7 +12,7 @@ export default function Home() {
   const [heroClass, setHeroClass] = useState("warrior")
 
   const [createHero, { loading }] = useMutation(CREATE_HERO, {
-    onCompleted: (data) => setHeroId(data.createHero.id),
+    onCompleted: (raw) => setHeroId((raw as { createHero: { id: string } }).createHero.id),
   })
 
   if (status === "loading") {
@@ -36,7 +36,20 @@ export default function Home() {
 
   if (!heroId) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen gap-6">
+      <div className="min-h-screen flex flex-col">
+        <header className="flex justify-between items-center px-6 py-3 border-b border-gray-800">
+          <span className="text-purple-400 font-semibold">AbyssCore</span>
+          <div className="flex items-center gap-3 text-sm text-gray-400">
+            <span>{session.user?.name ?? session.user?.email}</span>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-300 transition"
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+      <div className="flex flex-col items-center justify-center flex-1 gap-6">
         <h1 className="text-4xl font-bold text-purple-400">Create Your Hero</h1>
         <div className="bg-gray-900 p-8 rounded-xl border border-gray-800 flex flex-col gap-4 w-96">
           <input
@@ -73,6 +86,7 @@ export default function Home() {
             {loading ? "Creating..." : "Descend"}
           </button>
         </div>
+      </div>
       </div>
     )
   }

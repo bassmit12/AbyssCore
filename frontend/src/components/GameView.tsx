@@ -1,156 +1,316 @@
 "use client"
-import { useState, useEffect, useCallback } from "react"
-import { useMutation, useQuery, useSubscription } from "@apollo/client"
+import { useState } from "react"
+import { useMutation, useQuery } from "@apollo/client/react"
 import {
-  GET_HERO, START_DUNGEON, MOVE_HERO, ATTACK, GET_FLOOR,
-  GET_INVENTORY, USE_ITEM, COMBAT_EVENTS
+  GET_HERO,
+  START_RUN,
+  TRAVEL_TO_NODE,
+  START_ENCOUNTER,
+  GET_FLOOR_GRAPH,
 } from "@/lib/queries"
-import DungeonMap from "./DungeonMap"
+import MapView from "./MapView"
+import CombatView from "./CombatView"
+import ShopView from "./ShopView"
+import VictoryScreen from "./VictoryScreen"
+import EventView from "./EventView"
+import InventoryPanel from "./InventoryPanel"
 import HeroPanel from "./HeroPanel"
 import CombatLog from "./CombatLog"
-import InventoryPanel from "./InventoryPanel"
+import type { FloorGraph, EncounterState } from "@/types/game"
+
+type Screen = "lobby" | "map" | "combat" | "rest" | "shop" | "event" | "victory" | "dead"
 
 interface Props {
   heroId: string
 }
 
 export default function GameView({ heroId }: Props) {
-  const [dungeonId, setDungeonId] = useState<string | null>(null)
-  const [floorLevel, setFloorLevel] = useState(1)
+  const [screen, setScreen] = useState<Screen>("lobby")
   const [combatLog, setCombatLog] = useState<string[]>([])
-  const [showInventory, setShowInventory] = useState(false)
+  const [activeEncounter, setActiveEncounter] = useState<EncounterState | null>(null)
+  const [activeNodeId, setActiveNodeId] = useState<string | null>(null)
+  // Track floors cleared and monsters killed for the victory screen
+  const [floorsCleared, setFloorsCleared] = useState(0)
+  const [monstersKilled, setMonstersKilled] = useState(0)
+
+  // ── Data ──────────────────────────────────────────────────────────────────
 
   const { data: heroData, refetch: refetchHero } = useQuery(GET_HERO, {
     variables: { id: heroId },
-    pollInterval: 2000,
+    pollInterval: screen === "map" ? 5000 : 0,
   })
 
-  const { data: floorData } = useQuery(GET_FLOOR, {
-    variables: { dungeonId, level: floorLevel },
-    skip: !dungeonId,
-  })
-
-  const [startDungeon] = useMutation(START_DUNGEON, {
-    onCompleted: (data) => {
-      setDungeonId(data.startDungeon.dungeonId)
-      addLog("You descend into the abyss...")
-    },
-  })
-
-  const [moveHero] = useMutation(MOVE_HERO, {
-    onCompleted: (data) => {
-      refetchHero()
-      addLog(`You move. HP: ${data.moveHero.hp}/${data.moveHero.maxHp}`)
-    },
-  })
-
-  const [attack] = useMutation(ATTACK, {
-    onCompleted: (data) => {
-      const r = data.attack
-      addLog(r.message)
-      if (r.monsterDied) addLog("You gain XP!")
-      if (r.heroDied) addLog("💀 YOU HAVE DIED. Your run is over.")
-      refetchHero()
-    },
-  })
-
-  // Real-time combat events via GraphQL subscription
-  useSubscription(COMBAT_EVENTS, {
+  const { data: graphData, refetch: refetchGraph } = useQuery(GET_FLOOR_GRAPH, {
     variables: { heroId },
-    skip: !dungeonId,
-    onData: ({ data }) => {
-      const event = data.data?.combatEvent
-      if (event) addLog(`[live] ${event.message}`)
-    },
+    skip: screen === "lobby",
+    fetchPolicy: "network-only",
   })
+
+  const hero = (heroData as { hero?: ReturnType<typeof Object> } | undefined)?.hero as {
+    name: string; class: string; hp: number; maxHp: number; level: number; xp: number; gold: number; alive: boolean; runId?: string
+  } | undefined
+  const graph = (graphData as { floorGraph?: FloorGraph } | undefined)?.floorGraph
+
+  // ── Mutations ─────────────────────────────────────────────────────────────
+
+  const [startRun, { loading: startingRun }] = useMutation(START_RUN, {
+    onCompleted: () => {
+      addLog("A new run begins. Choose your path.")
+      setFloorsCleared(0)
+      setMonstersKilled(0)
+      setScreen("map")
+      refetchGraph()
+    },
+    onError: (err) => addLog(`Start run failed: ${err.message}`),
+  })
+
+  const [travelToNode, { loading: traveling }] = useMutation(TRAVEL_TO_NODE, {
+    onCompleted: (raw) => {
+      const data = raw as { travelToNode: FloorGraph }
+      const g = data.travelToNode
+      const node = g.nodes.find((n) => n.id === g.currentNodeId)
+      if (!node) return
+      addLog(`Arrived at ${node.type.toLowerCase()} node.`)
+      setActiveNodeId(node.id)
+      const t = node.type.toUpperCase()
+      if (t === "COMBAT" || t === "ELITE" || t === "BOSS") {
+        startEncounter({ variables: { heroId, nodeId: node.id } })
+      } else if (t === "REST") {
+        setScreen("rest")
+      } else if (t === "SHOP") {
+        setScreen("shop")
+      } else if (t === "EVENT") {
+        setScreen("event")
+      } else {
+        addLog("Nothing happens here yet. (treasure coming soon)")
+        refetchGraph()
+      }
+    },
+    onError: (err) => addLog(`Travel failed: ${err.message}`),
+  })
+
+  const [startEncounter, { loading: startingCombat }] = useMutation(START_ENCOUNTER, {
+    onCompleted: (raw) => {
+      const data = raw as { startEncounter: EncounterState }
+      setActiveEncounter(data.startEncounter)
+      addLog("Combat begins!")
+      setScreen("combat")
+    },
+    onError: (err) => addLog(`Encounter failed: ${err.message}`),
+  })
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   const addLog = (msg: string) => {
-    const time = new Date().toLocaleTimeString()
-    setCombatLog((prev) => [`[${time}] ${msg}`, ...prev].slice(0, 50))
+    const t = new Date().toLocaleTimeString()
+    setCombatLog((prev) => [`[${t}] ${msg}`, ...prev].slice(0, 50))
   }
 
-  // Keyboard movement
-  const handleKey = useCallback((e: KeyboardEvent) => {
-    if (!dungeonId) return
-    const dirMap: Record<string, string> = {
-      ArrowUp: "north", ArrowDown: "south", ArrowLeft: "west", ArrowRight: "east",
-      w: "north", s: "south", a: "west", d: "east",
-    }
-    const dir = dirMap[e.key]
-    if (dir) {
-      e.preventDefault()
-      moveHero({ variables: { heroId, direction: dir } })
-    }
-  }, [dungeonId, heroId, moveHero])
+  const handleVictory = () => {
+    addLog("Victory! Returning to map...")
+    // Track monsters killed (1 per combat win for now)
+    setMonstersKilled((k) => k + 1)
+    setActiveEncounter(null)
 
-  useEffect(() => {
-    window.addEventListener("keydown", handleKey)
-    return () => window.removeEventListener("keydown", handleKey)
-  }, [handleKey])
+    // Check if the current node is a BOSS — if so, show victory screen
+    if (graph) {
+      const node = graph.nodes.find((n) => n.id === activeNodeId)
+      if (node?.type.toUpperCase() === "BOSS") {
+        setFloorsCleared((f) => f + 1)
+        setScreen("victory")
+        refetchHero()
+        return
+      }
+    }
 
-  const hero = heroData?.hero
-  const floor = floorData?.dungeonFloor
+    setScreen("map")
+    refetchHero()
+    refetchGraph()
+  }
+
+  const handleDefeat = () => {
+    addLog("💀 YOU HAVE DIED. Your run is over.")
+    setActiveEncounter(null)
+    setScreen("dead")
+    refetchHero()
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex flex-col h-screen bg-gray-950 text-gray-100 overflow-hidden">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-gray-800 bg-gray-900">
-        <h1 className="text-xl font-bold text-purple-400">AbyssCore</h1>
-        <div className="text-sm text-gray-400">
-          {hero ? `${hero.name} the ${hero.class} · Floor ${floorLevel}` : "Loading..."}
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowInventory(!showInventory)}
-            className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"
-          >
-            Inventory [I]
-          </button>
-        </div>
-      </div>
-
-      {/* Main game area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left: dungeon map */}
-        <div className="flex-1 flex flex-col items-center justify-center p-4 relative">
-          {!dungeonId ? (
-            <button
-              onClick={() => startDungeon({ variables: { heroId } })}
-              className="px-10 py-4 bg-purple-700 hover:bg-purple-600 rounded-xl text-lg font-bold transition"
-            >
-              Start Run
-            </button>
-          ) : (
-            <>
-              <DungeonMap floor={floor} hero={hero} onAttack={(monsterId) =>
-                attack({ variables: { heroId, monsterId } })
-              } />
-              <div className="mt-3 text-xs text-gray-600">
-                WASD / Arrow keys to move · Click monster to attack
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Right: hero panel + combat log */}
-        <div className="w-80 border-l border-gray-800 flex flex-col">
-          <HeroPanel hero={hero} />
-          <CombatLog entries={combatLog} />
-        </div>
-      </div>
-
-      {/* Inventory overlay */}
-      {showInventory && (
-        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-[480px] max-h-[70vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-purple-400">Inventory</h2>
-              <button onClick={() => setShowInventory(false)} className="text-gray-500 hover:text-white">✕</button>
-            </div>
-            <InventoryPanel heroId={heroId} onUse={() => { setShowInventory(false); refetchHero() }} />
+      {/* Top bar — hidden on victory screen */}
+      {screen !== "victory" && (
+        <div className="flex items-center justify-between px-6 py-3 border-b border-gray-800 bg-gray-900 flex-shrink-0">
+          <h1 className="text-xl font-bold text-purple-400">AbyssCore</h1>
+          <div className="text-sm text-gray-400">
+            {hero ? `${hero.name} · ${hero.class} · HP ${hero.hp}/${hero.maxHp} · 💰 ${hero.gold}` : "Loading..."}
+          </div>
+          <div className="text-xs text-gray-600 uppercase tracking-widest">
+            {screen}
           </div>
         </div>
       )}
+
+      {/* Main area */}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden">
+
+          {/* LOBBY */}
+          {screen === "lobby" && (
+            <div className="flex-1 flex items-center justify-center">
+              <button
+                disabled={startingRun}
+                onClick={() => startRun({ variables: { heroId } })}
+                className="px-10 py-4 bg-purple-700 hover:bg-purple-600 disabled:opacity-40 rounded-xl text-lg font-bold transition"
+              >
+                {startingRun ? "Starting..." : "Begin Run"}
+              </button>
+            </div>
+          )}
+
+          {/* MAP */}
+          {screen === "map" && graph && (
+            <div className="flex-1 overflow-y-auto p-4">
+              <MapView
+                graph={graph}
+                onTravel={(nodeId) => travelToNode({ variables: { heroId, nodeId } })}
+                loading={traveling || startingCombat}
+              />
+              {(traveling || startingCombat) && (
+                <div className="text-center text-sm text-gray-500 py-2">Traveling...</div>
+              )}
+            </div>
+          )}
+
+          {screen === "map" && !graph && (
+            <div className="flex-1 flex items-center justify-center text-gray-500">
+              Loading map...
+            </div>
+          )}
+
+          {/* COMBAT */}
+          {screen === "combat" && activeEncounter && (
+            <CombatView
+              encounterId={activeEncounter.encounterId}
+              heroId={heroId}
+              initial={activeEncounter}
+              onVictory={handleVictory}
+              onDefeat={handleDefeat}
+            />
+          )}
+
+          {/* SHOP */}
+          {screen === "shop" && (
+            <ShopView
+              heroId={heroId}
+              nodeId={activeNodeId ?? ""}
+              heroGold={hero?.gold ?? 0}
+              onLeave={(updatedGold) => {
+                if (updatedGold !== undefined) {
+                  addLog(`Left shop. Gold: ${updatedGold}`)
+                }
+                setScreen("map")
+                refetchHero()
+                refetchGraph()
+              }}
+            />
+          )}
+
+          {/* EVENT */}
+          {screen === "event" && (
+            <EventView
+              heroId={heroId}
+              onDone={({ goldDelta, hpDelta }) => {
+                if (goldDelta > 0) addLog(`You gain ${goldDelta} gold!`)
+                if (goldDelta < 0) addLog(`You lose ${Math.abs(goldDelta)} gold.`)
+                if (hpDelta > 0) addLog(`You recover ${hpDelta} HP.`)
+                if (hpDelta < 0) addLog(`You lose ${Math.abs(hpDelta)} HP.`)
+                setScreen("map")
+                refetchHero()
+                refetchGraph()
+              }}
+            />
+          )}
+
+          {/* REST */}
+          {screen === "rest" && (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+              <div className="text-5xl">🔥</div>
+              <h2 className="text-2xl font-bold text-green-400">Rest Site</h2>
+              <p className="text-gray-400">The fire is warm. You feel your wounds closing.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    addLog("You rest and recover 30% max HP.")
+                    setScreen("map")
+                    refetchHero()
+                    refetchGraph()
+                  }}
+                  className="px-6 py-2 bg-green-800 hover:bg-green-700 rounded-lg font-semibold"
+                >
+                  Rest (heal 30%)
+                </button>
+                <button
+                  onClick={() => {
+                    addLog("You meditate, but nothing happens yet.")
+                    setScreen("map")
+                    refetchGraph()
+                  }}
+                  className="px-6 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg"
+                >
+                  Smith (upgrade — coming soon)
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* VICTORY */}
+          {screen === "victory" && hero && (
+            <VictoryScreen
+              heroId={heroId}
+              heroName={hero.name}
+              heroClass={hero.class}
+              floorsCleared={floorsCleared}
+              monstersKilled={monstersKilled}
+              onPlayAgain={() => {
+                setScreen("lobby")
+                refetchHero()
+              }}
+              onMainMenu={() => window.location.reload()}
+            />
+          )}
+
+          {/* DEAD */}
+          {screen === "dead" && (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+              <div className="text-6xl">💀</div>
+              <h2 className="text-3xl font-bold text-red-500">YOU DIED</h2>
+              <p className="text-gray-400">The abyss claimed another soul.</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-8 py-3 bg-red-800 hover:bg-red-700 rounded-xl font-semibold"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right sidebar: hero stats + inventory + log */}
+        {(screen === "map" || screen === "lobby") && (
+          <div className="w-72 border-l border-gray-800 flex flex-col flex-shrink-0">
+            <HeroPanel hero={hero} />
+            <div style={{ padding: '8px 12px', borderTop: '1px solid #1f2937' }}>
+              <div style={{ color: '#9ca3af', fontSize: '11px', fontWeight: 700, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Inventory
+              </div>
+              <InventoryPanel heroId={heroId} onHeroUpdated={refetchHero} />
+            </div>
+            <CombatLog entries={combatLog} />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

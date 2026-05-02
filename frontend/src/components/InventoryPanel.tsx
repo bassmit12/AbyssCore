@@ -1,51 +1,93 @@
-"use client"
-import { useQuery, useMutation } from "@apollo/client"
-import { GET_INVENTORY, USE_ITEM } from "@/lib/queries"
+'use client'
+
+import { useQuery, useMutation } from '@apollo/client/react'
+import { GET_INVENTORY, USE_ITEM } from '@/lib/queries'
 
 interface Props {
   heroId: string
-  onUse: () => void
+  onHeroUpdated?: () => void
 }
 
-const rarityColor: Record<string, string> = {
-  common: "text-gray-300",
-  uncommon: "text-green-400",
-  rare: "text-purple-400",
+const RARITY_COLORS: Record<string, string> = {
+  common: '#9ca3af',
+  uncommon: '#34d399',
+  rare: '#60a5fa',
+  epic: '#c084fc',
+  legendary: '#fbbf24',
 }
 
-export default function InventoryPanel({ heroId, onUse }: Props) {
-  const { data, loading, refetch } = useQuery(GET_INVENTORY, { variables: { heroId } })
-  const [useItem] = useMutation(USE_ITEM, {
-    onCompleted: () => { refetch(); onUse() },
+const TYPE_ICONS: Record<string, string> = {
+  potion: '🧪',
+  weapon: '⚔️',
+  armor: '🛡️',
+  relic: '💎',
+  gold: '💰',
+}
+
+export default function InventoryPanel({ heroId, onHeroUpdated }: Props) {
+  const { data, loading, error, refetch } = useQuery(GET_INVENTORY, {
+    variables: { heroId },
+    fetchPolicy: 'network-only',
   })
 
-  if (loading) return <div className="text-gray-600 text-sm">Loading...</div>
+  const [useItem] = useMutation(USE_ITEM, {
+    onCompleted: () => {
+      refetch()
+      onHeroUpdated?.()
+    },
+  })
 
-  const items = data?.inventory?.items ?? []
+  if (loading as unknown as boolean) return (
+    <div style={{ color: '#9ca3af', padding: '8px', fontSize: '14px' }}>Loading inventory...</div>
+  )
+  if (error as unknown as boolean) return (
+    <div style={{ color: '#ef4444', padding: '8px', fontSize: '12px' }}>Inventory unavailable</div>
+  )
 
-  if (items.length === 0) {
-    return <div className="text-gray-600 text-sm">Your pack is empty.</div>
-  }
+  const items: any[] = data?.heroInventory?.items ?? []
+
+  if (items.length === 0) return (
+    <div style={{ color: '#6b7280', padding: '8px', fontSize: '13px', fontStyle: 'italic' }}>
+      No items
+    </div>
+  )
 
   return (
-    <div className="space-y-2">
-      {items.map((item: { id: string; name: string; type: string; value: number; rarity: string }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      {items.map((item: any) => (
         <div
           key={item.id}
-          className="flex items-center justify-between border border-gray-700 rounded-lg px-3 py-2 bg-gray-800"
+          style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: `1px solid ${RARITY_COLORS[item.rarity] ?? '#374151'}`,
+            borderRadius: '6px',
+            padding: '6px 10px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '8px',
+          }}
         >
-          <div>
-            <div className={`font-medium ${rarityColor[item.rarity] ?? "text-gray-300"}`}>
-              {item.name}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '13px', color: RARITY_COLORS[item.rarity] ?? '#e5e7eb', display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <span>{TYPE_ICONS[item.type] ?? '📦'}</span>
+              <span style={{ fontWeight: 600 }}>{item.name}</span>
             </div>
-            <div className="text-xs text-gray-500 capitalize">
-              {item.type} · {item.rarity} · +{item.value}
-            </div>
+            <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{item.description}</div>
           </div>
-          {item.type === "potion" && (
+          {(item.type === 'potion' || item.type === 'gold') && (
             <button
               onClick={() => useItem({ variables: { heroId, itemId: item.id } })}
-              className="text-xs px-2 py-1 bg-green-800 hover:bg-green-700 rounded transition"
+              style={{
+                background: '#059669',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '4px 8px',
+                fontSize: '11px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
             >
               Use
             </button>

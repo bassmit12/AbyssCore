@@ -16,11 +16,12 @@ var db = sqldb.NewDatabase("inventory", sqldb.DatabaseConfig{
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type Item struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Type   string `json:"type"`
-	Value  int    `json:"value"`
-	Rarity string `json:"rarity"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Value       int    `json:"value"`
+	Rarity      string `json:"rarity"`
+	Description string `json:"description"`
 }
 
 type Inventory struct {
@@ -42,14 +43,14 @@ type LootDropRequest struct {
 
 // GetInventory returns all items in a hero's inventory.
 //
-//encore:api auth method=GET path=/inventory/:heroID
+//encore:api public method=GET path=/inventory/:heroID
 func GetInventory(ctx context.Context, heroID string) (*Inventory, error) {
 	rows, err := db.Query(ctx, `
-		SELECT hi.id, d.name, d.type, d.value, d.rarity
+		SELECT hi.id, d.name, d.type, d.value, d.rarity, d.description
 		FROM inventory.hero_inventory hi
 		JOIN inventory.item_definitions d ON d.id = hi.item_def_id
 		WHERE hi.hero_id = $1::uuid
-		ORDER BY hi.acquired_at DESC
+		ORDER BY hi.created_at DESC
 	`, heroID)
 	if err != nil {
 		return nil, err
@@ -59,7 +60,7 @@ func GetInventory(ctx context.Context, heroID string) (*Inventory, error) {
 	inv := &Inventory{HeroID: heroID, Items: []Item{}}
 	for rows.Next() {
 		var item Item
-		if err := rows.Scan(&item.ID, &item.Name, &item.Type, &item.Value, &item.Rarity); err != nil {
+		if err := rows.Scan(&item.ID, &item.Name, &item.Type, &item.Value, &item.Rarity, &item.Description); err != nil {
 			return nil, err
 		}
 		inv.Items = append(inv.Items, item)
@@ -68,9 +69,9 @@ func GetInventory(ctx context.Context, heroID string) (*Inventory, error) {
 }
 
 // UseItem uses a consumable from the hero's inventory.
-// Potions are consumed and HP is restored. Weapons/armor are equipped (simplified: just removed for now).
+// Potions are consumed and HP is restored. Gold items add gold.
 //
-//encore:api auth method=POST path=/inventory/use
+//encore:api public method=POST path=/inventory/use
 func UseItem(ctx context.Context, req *UseItemRequest) error {
 	// Load item
 	var itemType string
@@ -85,8 +86,8 @@ func UseItem(ctx context.Context, req *UseItemRequest) error {
 		return fmt.Errorf("item not found in inventory: %w", err)
 	}
 
-	if itemType != "potion" {
-		return errors.New("only potions can be used directly")
+	if itemType != "potion" && itemType != "gold" {
+		return errors.New("only potions and gold items can be used directly")
 	}
 
 	// Remove from inventory
@@ -108,10 +109,9 @@ func UseItem(ctx context.Context, req *UseItemRequest) error {
 }
 
 // RollLootDrop rolls for a random loot drop and adds it to hero inventory.
-// Called by RabbitMQ consumer on combat.monster.killed (Phase 5).
-// Also exposed as an API endpoint for testing.
+// Called by combat-service on combat win. Returns nil if no drop.
 //
-//encore:api auth method=POST path=/inventory/loot
+//encore:api public method=POST path=/inventory/loot
 func RollLootDrop(ctx context.Context, req *LootDropRequest) (*Item, error) {
 	// 60% chance of any drop
 	if rand.Float32() > 0.6 {
@@ -120,16 +120,17 @@ func RollLootDrop(ctx context.Context, req *LootDropRequest) (*Item, error) {
 
 	// Weighted random pick from item_definitions
 	type itemDef struct {
-		id     string
-		name   string
-		typ    string
-		value  int
-		rarity string
-		weight int
+		id          string
+		name        string
+		typ         string
+		value       int
+		rarity      string
+		description string
+		weight      int
 	}
 
 	rows, err := db.Query(ctx, `
-		SELECT id, name, type, value, rarity, drop_weight FROM inventory.item_definitions
+		SELECT id, name, type, value, rarity, description, drop_weight FROM inventory.item_definitions
 	`)
 	if err != nil {
 		return nil, err
@@ -140,7 +141,7 @@ func RollLootDrop(ctx context.Context, req *LootDropRequest) (*Item, error) {
 	totalWeight := 0
 	for rows.Next() {
 		var d itemDef
-		if err := rows.Scan(&d.id, &d.name, &d.typ, &d.value, &d.rarity, &d.weight); err != nil {
+		if err := rows.Scan(&d.id, &d.name, &d.typ, &d.value, &d.rarity, &d.description, &d.weight); err != nil {
 			return nil, err
 		}
 		defs = append(defs, d)
@@ -177,11 +178,12 @@ func RollLootDrop(ctx context.Context, req *LootDropRequest) (*Item, error) {
 	}
 
 	item := &Item{
-		ID:     invID,
-		Name:   chosen.name,
-		Type:   chosen.typ,
-		Value:  chosen.value,
-		Rarity: chosen.rarity,
+		ID:          invID,
+		Name:        chosen.name,
+		Type:        chosen.typ,
+		Value:       chosen.value,
+		Rarity:      chosen.rarity,
+		Description: chosen.description,
 	}
 
 	publishEvent(ctx, "inventory.item.dropped", map[string]any{
@@ -192,6 +194,3 @@ func RollLootDrop(ctx context.Context, req *LootDropRequest) (*Item, error) {
 	return item, nil
 }
 
-func publishEvent(ctx context.Context, routingKey string, payload map[string]any) {
-	// TODO: Phase 5 - RabbitMQ
-}

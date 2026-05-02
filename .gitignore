@@ -11,6 +11,10 @@ npm-debug.log*
 *.exe
 *.out
 /vendor/
+graphql-gateway/graphql-gateway
+
+# Hermes Agent
+.hermes/
 
 # Encore
 .encore/

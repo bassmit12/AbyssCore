@@ -31,7 +31,7 @@ func tokenFromCtx(ctx context.Context) string {
 func encoreBaseURL() string {
 	u := os.Getenv("ENCORE_BASE_URL")
 	if u == "" {
-		return "http://localhost:4001"
+		return "http://localhost:4000"
 	}
 	return strings.TrimSuffix(u, "/")
 }
