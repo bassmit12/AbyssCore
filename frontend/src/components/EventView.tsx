@@ -19,7 +19,8 @@ export default function EventView({ heroId, onDone }: Props) {
 
   const [resolveEvent] = useMutation(RESOLVE_EVENT, {
     onCompleted: (data) => {
-      setResolved(data.resolveEvent)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setResolved((data as any).resolveEvent)
       setResolving(false)
     },
   })
@@ -36,7 +37,7 @@ export default function EventView({ heroId, onDone }: Props) {
     </div>
   )
 
-  const event = data?.randomEvent
+  const event = (data as any)?.randomEvent
 
   if (resolved) {
     return (
