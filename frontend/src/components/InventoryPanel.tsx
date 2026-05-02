@@ -44,7 +44,7 @@ export default function InventoryPanel({ heroId, onHeroUpdated }: Props) {
     <div style={{ color: '#ef4444', padding: '8px', fontSize: '12px' }}>Inventory unavailable</div>
   )
 
-  const items: any[] = data?.heroInventory?.items ?? []
+  const items: any[] = (data as any)?.heroInventory?.items ?? []
 
   if (items.length === 0) return (
     <div style={{ color: '#6b7280', padding: '8px', fontSize: '13px', fontStyle: 'italic' }}>
