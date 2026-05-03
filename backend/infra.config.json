@@ -1,4 +1,5 @@
 {
+  "$schema": "https://encore.dev/schemas/infra.schema.json",
   "metadata": {
     "app_id": "abysscore",
     "env_name": "production",
@@ -11,13 +12,13 @@
       "host": "postgres:5432",
       "tls_config": { "disabled": true },
       "databases": {
-        "combat":      { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
-        "deck":        { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
-        "dungeon":     { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
-        "game":        { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
-        "inventory":   { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
-        "leaderboard": { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} },
-        "map":         { "username": {"value": "abysscore"}, "password": {"value": "abysscore"} }
+        "combat":      { "username": "abysscore", "password": "abysscore" },
+        "deck":        { "username": "abysscore", "password": "abysscore" },
+        "dungeon":     { "username": "abysscore", "password": "abysscore" },
+        "game":        { "username": "abysscore", "password": "abysscore" },
+        "inventory":   { "username": "abysscore", "password": "abysscore" },
+        "leaderboard": { "username": "abysscore", "password": "abysscore" },
+        "map":         { "username": "abysscore", "password": "abysscore" }
       }
     }
   ]
