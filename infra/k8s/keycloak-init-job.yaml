@@ -14,6 +14,8 @@ data:
     echo "Keycloak ready, creating realm..."
     /opt/keycloak/bin/kcadm.sh create realms -s realm=abysscore -s enabled=true || echo "Realm exists"
     /opt/keycloak/bin/kcadm.sh create clients -r abysscore -s clientId=abysscore-frontend -s publicClient=true -s 'redirectUris=["*"]' -s 'webOrigins=["*"]' -s enabled=true || echo "Client exists"
+    /opt/keycloak/bin/kcadm.sh create users -r abysscore -s username=testplayer -s enabled=true -s emailVerified=true || echo "User exists"
+    /opt/keycloak/bin/kcadm.sh set-password -r abysscore --username testplayer --new-password password
     echo "Done"
 ---
 apiVersion: batch/v1
