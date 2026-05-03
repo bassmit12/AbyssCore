@@ -36,3 +36,4 @@ Thumbs.db
 *.key
 *.crt
 keycloak-init-done
+abysscore_cluster.conf
