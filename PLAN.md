@@ -5,7 +5,9 @@
 
 **Goal:** A real-time multiplayer dungeon crawler game that showcases a production-grade Kubernetes stack.
 
-**Cluster status:** OFFLINE until ~1 week from 2025-04-30. All work until then is local dev (docker-compose) only. Kubernetes manifests can be written but not tested yet.
+**Cluster status:** ONLINE since 2026-05-02. Multistax-managed Kubernetes (k8s v1.33.1, 3 nodes, 10.1.1.0/24). Reachable via Fontys OpenVPN OR Cloudflare Tunnel (no VPN required). Live at https://abysscore.bassmit.dev.
+
+**Track ongoing work in PROGRESS.md** — single source of truth for what's done, what's next, and known pitfalls.
 
 **Architecture:** Event-driven microservices. Player actions flow through RabbitMQ and fan out to independent services. GraphQL gateway aggregates Encore.go services into a single API for the Next.js frontend.
 
@@ -128,20 +130,23 @@
 ---
 
 ## Phase 9: Kubernetes Manifests (write now, apply when cluster is back)
-- [ ] **9.1** Namespace: abysscore
-- [ ] **9.2** RabbitMQ: deploy via RabbitMQ Cluster Operator
-- [ ] **9.3** Keycloak: Deployment + Service + realm init Job (reuse KubePulse pattern)
-- [ ] **9.4** Postgres: per-service StatefulSets or single instance with multiple DBs
-- [ ] **9.5** Encore services: Deployment + Service + ConfigMap per service
-- [ ] **9.6** GraphQL gateway: Deployment + Service
-- [ ] **9.7** Next.js frontend: Deployment + Service + Ingress
+- [x] **9.1** Namespace: abysscore
+- [ ] **9.2** RabbitMQ: deploy via RabbitMQ Cluster Operator _(currently plain Deployment with default guest:guest creds — works but not production-ready)_
+- [x] **9.3** Keycloak: Deployment + Service + realm init Job (reuse KubePulse pattern)
+- [x] **9.4** Postgres: per-service StatefulSets or single instance with multiple DBs _(single instance, 7 separate databases per Encore infra config)_
+- [x] **9.5** Encore services: Deployment + Service + ConfigMap per service _(single backend image, infra.config.json baked at build time)_
+- [x] **9.6** GraphQL gateway: Deployment + Service
+- [x] **9.7** Next.js frontend: Deployment + Service + Ingress _(no Ingress — exposed via Cloudflare Tunnel instead)_
 - [ ] **9.8** Prometheus: kube-prometheus-stack Helm chart
 - [ ] **9.9** Grafana: bundled with kube-prometheus-stack, import dashboards via ConfigMap
 - [ ] **9.10** OpenTelemetry Collector: DaemonSet or Deployment
 - [ ] **9.11** Cilium network policies: restrict inter-service traffic (only game-service publishes to RabbitMQ, etc.)
 - [ ] **9.12** Cilium L7 visibility policy for GraphQL traffic inspection
 - [ ] **9.13** Horizontal Pod Autoscaler on combat-service (spikes during boss fights)
-- [ ] **9.14** ArgoCD Application manifest (if using GitOps like KubePulse)
+- [ ] **9.14** ArgoCD Application manifest (if using GitOps like KubePulse) _(planned next — see PROGRESS.md)_
+- [x] **9.15** Cloudflare Tunnel pod (cloudflared) — public exposure without LoadBalancer/Ingress, no VPN required
+- [x] **9.16** GitHub Actions CI: build + push backend/gateway/frontend images to ghcr.io on push to main
+- [x] **9.17** ghcr.io image pull secret (`ghcr-secret`) provisioned in cluster
 
 ---
 

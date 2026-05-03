@@ -2,29 +2,50 @@
 
 A real-time multiplayer dungeon crawler built to showcase a modern Kubernetes-native stack.
 
+🌐 **Live demo:** https://abysscore.bassmit.dev (testplayer / password)
+
+📋 **Operational status:** see [PROGRESS.md](./PROGRESS.md)
+📝 **Implementation plan:** see [PLAN.md](./PLAN.md)
+
 ## Stack
 
 | Layer | Tech |
 |---|---|
-| Frontend | Next.js 15 (App Router, TypeScript, Tailwind) |
+| Frontend | Next.js 16 (App Router, TypeScript) |
 | API Gateway | GraphQL (gqlgen) + WebSocket subscriptions |
-| Backend | Encore.go microservices (6 services) |
+| Backend | Encore.go microservices (7 services) |
 | Auth | Keycloak (OIDC/JWT) |
 | Event Bus | RabbitMQ (topic exchange: `abysscore.events`) |
-| Database | PostgreSQL (per-service schemas) |
-| Tracing | OpenTelemetry → Jaeger |
-| Metrics | Prometheus + Grafana |
-| Infra | Kubernetes + Cilium CNI (network policies) |
+| Database | PostgreSQL (per-service databases) |
+| Tracing | OpenTelemetry → Jaeger _(planned)_ |
+| Metrics | Prometheus + Grafana _(planned)_ |
+| Infra | Kubernetes (Multistax-managed, 3 nodes) |
+| Public Access | Cloudflare Tunnel (no LoadBalancer/Ingress, no VPN required) |
+| CI/CD | GitHub Actions → ghcr.io |
 
 ## Services
 
 - **auth-service** — JWKS JWT validation, Keycloak integration
 - **game-service** — Hero CRUD, movement, XP/leveling
-- **dungeon-service** — Procedural 8×8 floor generation
+- **dungeon-service** — Procedural floor generation
 - **combat-service** — Turn-based combat resolution
+- **deck-service** — Card definitions, hero decks
 - **inventory-service** — Weighted loot drops, item use
 - **leaderboard-service** — Run submission, top-10 rankings
+- **map-service** — Dungeon node graph, hero positions
 - **graphql-gateway** — Unified query surface, WebSocket real-time
+
+## Production Deploy (live cluster)
+
+| Endpoint | URL |
+|---|---|
+| Frontend | https://abysscore.bassmit.dev |
+| GraphQL Playground | https://abysscore-api.bassmit.dev/playground |
+| Keycloak Admin | https://abysscore-auth.bassmit.dev (admin/admin) |
+
+Pushing to `main` triggers GitHub Actions to build and push images to ghcr.io. **Currently a manual `kubectl rollout restart` is required afterward** — ArgoCD GitOps is planned next (see PROGRESS.md).
+
+For cluster operations (kubectl), connect to Fontys OpenVPN and use `abysscore_cluster.conf` (gitignored).
 
 ## Local Dev
 
@@ -45,16 +66,17 @@ cd backend
 encore run
 
 # 3. GraphQL gateway
-cd backend/graphql-gateway
+cd graphql-gateway
 go run .
 ```
 
-### URLs
+### Local URLs
 
 | Service | URL |
 |---|---|
 | Game | http://localhost:3000 |
-| GraphQL Playground | http://localhost:4000/graphql |
+| GraphQL Playground | http://localhost:4001/playground |
+| Encore Dashboard | http://localhost:9400 |
 | Keycloak Admin | http://localhost:8080 (admin/admin) |
 | RabbitMQ Management | http://localhost:15672 (guest/guest) |
 | Prometheus | http://localhost:9090 |
@@ -63,7 +85,7 @@ go run .
 
 ### Test Credentials
 - Username: `testplayer`
-- Password: `testpass`
+- Password: `password`
 
 ## RabbitMQ Event Routing
 
@@ -73,6 +95,7 @@ Exchange: `abysscore.events` (topic)
 |---|---|---|
 | `dungeon.player.moved` | game-service | dungeon-service |
 | `dungeon.floor.entered` | dungeon-service | game-service |
+| `dungeon.chest.opened` | dungeon-service | inventory-service |
 | `combat.attack.initiated` | combat-service | — |
 | `combat.result` | combat-service | leaderboard-service |
 | `combat.monster.killed` | combat-service | inventory-service, game-service |
