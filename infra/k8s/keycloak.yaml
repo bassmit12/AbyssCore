@@ -34,8 +34,14 @@ spec:
           value: abysscore
         - name: KC_DB_PASSWORD
           value: abysscore
+        - name: KC_HOSTNAME
+          value: "abysscore-auth.bassmit.dev"
         - name: KC_HOSTNAME_STRICT
           value: "false"
+        - name: KC_HOSTNAME_STRICT_HTTPS
+          value: "false"
+        - name: KC_PROXY
+          value: "edge"
         - name: KC_HTTP_ENABLED
           value: "true"
         ports:
