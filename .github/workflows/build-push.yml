@@ -3,6 +3,8 @@ name: Build and Push Images
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'infra/k8s/**'
   workflow_dispatch:
 
 env:
