@@ -142,7 +142,14 @@ export default function GameView({ heroId }: Props) {
       {/* Top bar — hidden on victory screen */}
       {screen !== "victory" && (
         <div className="flex items-center justify-between px-6 py-3 border-b border-gray-800 bg-gray-900 flex-shrink-0">
-          <h1 className="text-xl font-bold text-purple-400">AbyssCore</h1>
+          <h1 className="text-xl font-bold text-purple-400">
+            AbyssCore
+            {process.env.NEXT_PUBLIC_APP_VERSION && (
+              <span className="ml-2 text-xs font-mono text-gray-500">
+                v{process.env.NEXT_PUBLIC_APP_VERSION.slice(0, 7)}
+              </span>
+            )}
+          </h1>
           <div className="text-sm text-gray-400">
             {hero ? `${hero.name} · ${hero.class} · HP ${hero.hp}/${hero.maxHp} · 💰 ${hero.gold}` : "Loading..."}
           </div>

@@ -87,6 +87,7 @@ jobs:
           push: true
           tags: ghcr.io/${{ env.OWNER }}/abysscore-frontend:latest
           build-args: |
+            NEXT_PUBLIC_APP_VERSION=${{ github.sha }}
             NEXT_PUBLIC_GRAPHQL_URL=https://abysscore-api.bassmit.dev/graphql
             NEXT_PUBLIC_GRAPHQL_WS_URL=wss://abysscore-api.bassmit.dev/graphql
             NEXT_PUBLIC_KEYCLOAK_URL=https://abysscore-auth.bassmit.dev

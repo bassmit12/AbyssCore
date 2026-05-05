@@ -38,7 +38,14 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col">
         <header className="flex justify-between items-center px-6 py-3 border-b border-gray-800">
-          <span className="text-purple-400 font-semibold">AbyssCore</span>
+          <span className="text-purple-400 font-semibold">
+            AbyssCore
+            {process.env.NEXT_PUBLIC_APP_VERSION && (
+              <span className="ml-2 text-xs font-mono text-gray-500">
+                v{process.env.NEXT_PUBLIC_APP_VERSION.slice(0, 7)}
+              </span>
+            )}
+          </span>
           <div className="flex items-center gap-3 text-sm text-gray-400">
             <span>{session.user?.name ?? session.user?.email}</span>
             <button
