@@ -34,6 +34,8 @@ kind: Service
 metadata:
   name: abysscore-backend
   namespace: abysscore
+  labels:
+    app: abysscore-backend
 spec:
   selector:
     app: abysscore-backend

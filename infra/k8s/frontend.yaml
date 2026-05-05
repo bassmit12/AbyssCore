@@ -43,6 +43,8 @@ kind: Service
 metadata:
   name: abysscore-frontend
   namespace: abysscore
+  labels:
+    app: abysscore-frontend
 spec:
   type: NodePort
   selector:
