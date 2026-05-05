@@ -17,7 +17,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: frontend
-        image: ghcr.io/bassmit12/abysscore-frontend:a5cc7ab7f7256917312805ab5fa089310bae693f
+        image: ghcr.io/bassmit12/abysscore-frontend:2fb2f3a5ed653c4052d3fcd3796f0aac135537e1
         imagePullPolicy: Always
         resources:
           requests:
