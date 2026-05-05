@@ -1,5 +1,4 @@
 "use client"
-import Image from "next/image"
 import type { Card } from "@/types/game"
 
 const TYPE_COLOR: Record<string, string> = {
@@ -73,12 +72,11 @@ export default function CardHand({ cards, energy, maxEnergy, onPlay, disabled }:
               {/* Artwork or placeholder */}
               {artSrc ? (
                 <div className="w-full h-20 relative">
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={artSrc}
                     alt={card.name}
-                    fill
-                    className="object-cover"
-                    sizes="112px"
+                    className="w-full h-full object-cover"
                   />
                 </div>
               ) : (

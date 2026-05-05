@@ -1,6 +1,5 @@
 "use client"
 import { useState } from "react"
-import Image from "next/image"
 import { useMutation } from "@apollo/client/react"
 import { PLAY_CARD, END_TURN } from "@/lib/queries"
 import CardHand from "./CardHand"
@@ -140,12 +139,11 @@ export default function CombatView({ encounterId, heroId, initial, onVictory, on
           {/* Draw pile */}
           <div className="relative flex flex-col items-center gap-0.5" title={`Draw pile: ${hero.drawPileCount} cards`}>
             <div className="relative w-10 h-14 rounded-md overflow-hidden border border-gray-700 shadow-md">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src="/cards/draw_pile_15.png"
                 alt="Draw pile"
-                fill
-                className="object-cover"
-                sizes="40px"
+                className="w-full h-full object-cover"
               />
             </div>
             <span className="text-[10px] text-gray-400 font-semibold">{hero.drawPileCount}</span>
