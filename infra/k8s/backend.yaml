@@ -20,8 +20,12 @@ spec:
         image: ghcr.io/bassmit12/abysscore-backend:latest
         imagePullPolicy: Always
         env:
+        - name: PORT
+          value: "4000"
         - name: RABBITMQ_URL
           value: "amqp://guest:guest@rabbitmq:5672/"
+        - name: KEYCLOAK_ISSUER
+          value: "https://abysscore-auth.bassmit.dev/realms/abysscore"
         ports:
         - containerPort: 4000
 ---
@@ -34,5 +38,6 @@ spec:
   selector:
     app: abysscore-backend
   ports:
-  - port: 4000
+  - name: http
+    port: 4000
     targetPort: 4000

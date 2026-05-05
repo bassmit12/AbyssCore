@@ -1,5 +1,6 @@
 ---
 # ServiceMonitor for Encore backend (port 4000)
+# Encore exposes Prometheus metrics at /debug/metrics
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -16,7 +17,7 @@ spec:
       app: abysscore-backend
   endpoints:
     - port: http
-      path: /metrics
+      path: /debug/metrics
       interval: 30s
 ---
 # ServiceMonitor for GraphQL gateway (port 4001)
