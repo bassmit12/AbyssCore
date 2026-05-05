@@ -17,14 +17,15 @@ spec:
       - name: ghcr-secret
       containers:
       - name: frontend
-    20|        image: ghcr.io/bassmit12/abysscore-frontend:latest
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "256Mi"
+        image: ghcr.io/bassmit12/abysscore-frontend:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
         env:
         - name: PORT
           value: "3000"
