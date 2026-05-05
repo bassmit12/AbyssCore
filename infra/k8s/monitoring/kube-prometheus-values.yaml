@@ -1,6 +1,6 @@
 global:
   imagePullSecrets:
-    - name: ghcr-secret
+    - ghcr-secret
 
 # Prometheus Operator
 prometheusOperator:
