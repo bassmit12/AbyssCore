@@ -49,8 +49,6 @@ grafana:
       registry: ghcr.io
       repository: bassmit12/prom-k8s-sidecar
       tag: "2.7.1"
-  imagePullSecrets:
-    - name: ghcr-secret
   adminPassword: "abysscore-grafana"
   grafana.ini:
     server:
@@ -80,8 +78,6 @@ prometheus-node-exporter:
     registry: ghcr.io
     repository: bassmit12/prom-node-exporter
     tag: v1.11.1
-  imagePullSecrets:
-    - name: ghcr-secret
 
 # kube-state-metrics
 kube-state-metrics:
@@ -89,5 +85,3 @@ kube-state-metrics:
     registry: ghcr.io
     repository: bassmit12/prom-kube-state-metrics
     tag: v2.18.0
-  imagePullSecrets:
-    - name: ghcr-secret
