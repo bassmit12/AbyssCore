@@ -5,18 +5,12 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: 84.5.0
-    helm:
-      valueFiles:
-        - $values/infra/k8s/monitoring/kube-prometheus-values.yaml
   sources:
     - repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
       targetRevision: 84.5.0
       helm:
+        releaseName: kube-prometheus-stack
         valueFiles:
           - $values/infra/k8s/monitoring/kube-prometheus-values.yaml
     - repoURL: https://github.com/bassmit12/AbyssCore.git
