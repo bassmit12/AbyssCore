@@ -1,0 +1,93 @@
+global:
+  imagePullSecrets:
+    - name: ghcr-secret
+
+# Prometheus Operator
+prometheusOperator:
+  image:
+    registry: ghcr.io
+    repository: bassmit12/prom-operator
+    tag: v0.90.1
+  prometheusConfigReloader:
+    image:
+      registry: ghcr.io
+      repository: bassmit12/prom-config-reloader
+      tag: v0.90.1
+  admissionWebhooks:
+    patch:
+      image:
+        registry: ghcr.io
+        repository: bassmit12/prom-webhook-certgen
+        tag: "1.8.2"
+
+# Prometheus
+prometheus:
+  prometheusSpec:
+    image:
+      registry: ghcr.io
+      repository: bassmit12/prom-prometheus
+      tag: v3.11.3
+    # Scrape all ServiceMonitors across all namespaces
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    retention: 7d
+    resources:
+      requests:
+        memory: 400Mi
+        cpu: 100m
+      limits:
+        memory: 1Gi
+
+# Grafana
+grafana:
+  image:
+    registry: ghcr.io
+    repository: bassmit12/prom-grafana
+    tag: "13.0.1"
+  sidecar:
+    image:
+      registry: ghcr.io
+      repository: bassmit12/prom-k8s-sidecar
+      tag: "2.7.1"
+  imagePullSecrets:
+    - name: ghcr-secret
+  adminPassword: "abysscore-grafana"
+  grafana.ini:
+    server:
+      root_url: "https://grafana.bassmit.dev"
+      serve_from_sub_path: false
+  # Disable persistence for now (no StorageClass needed)
+  persistence:
+    enabled: false
+
+# Alertmanager
+alertmanager:
+  alertmanagerSpec:
+    image:
+      registry: ghcr.io
+      repository: bassmit12/prom-alertmanager
+      tag: v0.32.1
+
+# Node Exporter
+nodeExporter:
+  operatingSystems:
+    linux:
+      enabled: true
+  resources: {}
+
+prometheus-node-exporter:
+  image:
+    registry: ghcr.io
+    repository: bassmit12/prom-node-exporter
+    tag: v1.11.1
+  imagePullSecrets:
+    - name: ghcr-secret
+
+# kube-state-metrics
+kube-state-metrics:
+  image:
+    registry: ghcr.io
+    repository: bassmit12/prom-kube-state-metrics
+    tag: v2.18.0
+  imagePullSecrets:
+    - name: ghcr-secret

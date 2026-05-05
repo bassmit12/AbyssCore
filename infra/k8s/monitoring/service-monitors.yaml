@@ -1,0 +1,60 @@
+---
+# ServiceMonitor for Encore backend (port 4000)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: abysscore-backend
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - abysscore
+  selector:
+    matchLabels:
+      app: abysscore-backend
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+---
+# ServiceMonitor for GraphQL gateway (port 4001)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: abysscore-gateway
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - abysscore
+  selector:
+    matchLabels:
+      app: abysscore-gateway
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+---
+# ServiceMonitor for Next.js frontend (port 3000)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: abysscore-frontend
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - abysscore
+  selector:
+    matchLabels:
+      app: abysscore-frontend
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
