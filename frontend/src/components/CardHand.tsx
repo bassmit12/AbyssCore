@@ -59,37 +59,31 @@ export default function CardHand({ cards, energy, maxEnergy, onPlay, disabled }:
               onClick={() => onPlay(card.id)}
               title={isEnabled ? card.effect : "Not available"}
               className={`
-                relative flex flex-col items-center w-28 rounded-xl border-2 overflow-hidden text-left transition-all
-                ${colorClass}
-                ${canPlay ? "cursor-pointer hover:-translate-y-2 shadow-lg hover:shadow-xl" : "opacity-40 cursor-not-allowed"}
+                relative w-32 h-48 rounded-lg overflow-hidden transition-all
+                ${canPlay ? "cursor-pointer hover:-translate-y-3 shadow-lg hover:shadow-2xl" : "opacity-40 cursor-not-allowed"}
               `}
             >
-              {/* Cost gem */}
-              <div className="absolute top-1.5 left-1.5 z-10 bg-blue-700 rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow">
-                {card.cost}
-              </div>
-
               {/* Artwork or placeholder */}
               {artSrc ? (
-                <div className="w-full h-20 relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={artSrc}
-                    alt={card.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={artSrc}
+                  alt={card.name}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <div className="w-full h-20 bg-gray-800 flex items-center justify-center text-3xl select-none">
-                  {card.type.toUpperCase() === "ATTACK" ? "⚔️" : card.type.toUpperCase() === "SKILL" ? "✨" : "🌀"}
+                <div className={`w-full h-full flex flex-col items-center justify-center gap-1 border-2 rounded-lg ${colorClass}`}>
+                  <span className="text-3xl select-none">
+                    {card.type.toUpperCase() === "ATTACK" ? "⚔️" : card.type.toUpperCase() === "SKILL" ? "✨" : "🌀"}
+                  </span>
+                  <span className="text-xs font-semibold text-white text-center px-1 leading-tight">{card.name}</span>
+                  <span className="text-[9px] text-gray-400">{card.type}</span>
+                  {/* Cost gem on placeholder */}
+                  <div className="absolute top-1.5 left-1.5 bg-blue-700 rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow">
+                    {card.cost}
+                  </div>
                 </div>
               )}
-
-              {/* Name + type strip */}
-              <div className="px-1.5 py-1.5 w-full">
-                <span className="text-xs font-semibold text-white text-center leading-tight block">{card.name}</span>
-                <span className="text-[9px] text-gray-400 mt-0.5 text-center block">{card.type}</span>
-              </div>
             </button>
           )
         })}
