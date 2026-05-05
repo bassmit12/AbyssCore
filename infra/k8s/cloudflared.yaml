@@ -17,7 +17,14 @@ spec:
       - name: ghcr-secret
       containers:
       - name: cloudflared
-        image: ghcr.io/bassmit12/cloudflared:latest
+    20|        image: ghcr.io/bassmit12/cloudflared:latest
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
         args:
         - tunnel
         - --no-autoupdate

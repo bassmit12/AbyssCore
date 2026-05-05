@@ -5,13 +5,10 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: abysscore-backend
-  namespace: monitoring
+  namespace: abysscore
   labels:
     release: kube-prometheus-stack
 spec:
-  namespaceSelector:
-    matchNames:
-      - abysscore
   selector:
     matchLabels:
       app: abysscore-backend
@@ -25,13 +22,10 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: abysscore-gateway
-  namespace: monitoring
+  namespace: abysscore
   labels:
     release: kube-prometheus-stack
 spec:
-  namespaceSelector:
-    matchNames:
-      - abysscore
   selector:
     matchLabels:
       app: abysscore-gateway
@@ -45,13 +39,10 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: abysscore-frontend
-  namespace: monitoring
+  namespace: abysscore
   labels:
     release: kube-prometheus-stack
 spec:
-  namespaceSelector:
-    matchNames:
-      - abysscore
   selector:
     matchLabels:
       app: abysscore-frontend

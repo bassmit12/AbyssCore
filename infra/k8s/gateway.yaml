@@ -17,7 +17,14 @@ spec:
       - name: ghcr-secret
       containers:
       - name: gateway
-        image: ghcr.io/bassmit12/abysscore-gateway:latest
+    20|        image: ghcr.io/bassmit12/abysscore-gateway:latest
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
         env:
         - name: ENCORE_BASE_URL
           value: http://abysscore-backend:4000

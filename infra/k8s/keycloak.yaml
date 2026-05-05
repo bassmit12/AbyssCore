@@ -13,13 +13,16 @@ spec:
       labels:
         app: keycloak
     spec:
-      initContainers:
-      - name: wait-for-postgres
-        image: busybox
-        command: ['sh', '-c', 'until nc -z postgres 5432; do sleep 2; done']
       containers:
       - name: keycloak
         image: quay.io/keycloak/keycloak:24.0.0
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1536Mi"
         args: ["start-dev"]
         env:
         - name: KEYCLOAK_ADMIN
