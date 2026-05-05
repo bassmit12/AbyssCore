@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import Image from "next/image"
 import { useMutation } from "@apollo/client/react"
 import { PLAY_CARD, END_TURN } from "@/lib/queries"
 import CardHand from "./CardHand"
@@ -135,9 +136,27 @@ export default function CombatView({ encounterId, heroId, initial, onVictory, on
           ))}
         </div>
         {/* Pile counts */}
-        <div className="text-[11px] text-gray-600 flex gap-2">
-          <span title="Draw pile">🃏{hero.drawPileCount}</span>
-          <span title="Discard">🗑️{hero.discardPileCount}</span>
+        <div className="flex items-center gap-3">
+          {/* Draw pile */}
+          <div className="relative flex flex-col items-center gap-0.5" title={`Draw pile: ${hero.drawPileCount} cards`}>
+            <div className="relative w-10 h-14 rounded-md overflow-hidden border border-gray-700 shadow-md">
+              <Image
+                src="/cards/draw_pile_15.png"
+                alt="Draw pile"
+                fill
+                className="object-cover"
+                sizes="40px"
+              />
+            </div>
+            <span className="text-[10px] text-gray-400 font-semibold">{hero.drawPileCount}</span>
+          </div>
+          {/* Discard pile */}
+          <div className="flex flex-col items-center gap-0.5" title={`Discard: ${hero.discardPileCount} cards`}>
+            <div className="w-10 h-14 rounded-md border border-gray-700 bg-gray-800 flex items-center justify-center text-xl shadow-md">
+              🗑️
+            </div>
+            <span className="text-[10px] text-gray-400 font-semibold">{hero.discardPileCount}</span>
+          </div>
         </div>
       </div>
 

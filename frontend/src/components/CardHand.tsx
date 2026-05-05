@@ -1,4 +1,5 @@
 "use client"
+import Image from "next/image"
 import type { Card } from "@/types/game"
 
 const TYPE_COLOR: Record<string, string> = {
@@ -8,6 +9,15 @@ const TYPE_COLOR: Record<string, string> = {
   STATUS: "bg-gray-800 border-gray-600",
   CURSE:  "bg-gray-900 border-red-900",
 }
+
+// Cards that have artwork — keyed by lowercase name
+const CARD_ART: Record<string, string> = {
+  "ball lightning": "/cards/ball_lightning.png",
+  "chaos theory":   "/cards/chaos_theory.png",
+}
+
+// Only these cards are playable for mage right now
+const ENABLED_CARDS = new Set(["ball lightning", "chaos theory"])
 
 interface Props {
   cards: Card[]
@@ -37,27 +47,51 @@ export default function CardHand({ cards, energy, maxEnergy, onPlay, disabled }:
       {/* Card row */}
       <div className="flex gap-2 flex-wrap justify-center">
         {cards.map((card) => {
-          const canPlay = !disabled && card.cost <= energy
-          const colorClass = TYPE_COLOR[card.type] ?? TYPE_COLOR.SKILL
+          const key = card.name.toLowerCase()
+          const isEnabled = ENABLED_CARDS.has(key)
+          const artSrc = CARD_ART[key]
+          const canPlay = !disabled && isEnabled && card.cost <= energy
+          const colorClass = TYPE_COLOR[card.type.toUpperCase()] ?? TYPE_COLOR.SKILL
 
           return (
             <button
               key={card.id}
               disabled={!canPlay}
               onClick={() => onPlay(card.id)}
+              title={isEnabled ? card.effect : "Not available"}
               className={`
-                flex flex-col items-center w-24 rounded-xl border-2 px-2 py-2 text-left transition-all
+                relative flex flex-col items-center w-28 rounded-xl border-2 overflow-hidden text-left transition-all
                 ${colorClass}
-                ${canPlay ? "cursor-pointer hover:-translate-y-2" : "opacity-40 cursor-not-allowed"}
+                ${canPlay ? "cursor-pointer hover:-translate-y-2 shadow-lg hover:shadow-xl" : "opacity-40 cursor-not-allowed"}
               `}
-              title={card.effect}
             >
               {/* Cost gem */}
-              <div className="self-start bg-blue-700 rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold mb-1">
+              <div className="absolute top-1.5 left-1.5 z-10 bg-blue-700 rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow">
                 {card.cost}
               </div>
-              <span className="text-xs font-semibold text-white text-center leading-tight">{card.name}</span>
-              <span className="text-[9px] text-gray-400 mt-1 text-center">{card.type}</span>
+
+              {/* Artwork or placeholder */}
+              {artSrc ? (
+                <div className="w-full h-20 relative">
+                  <Image
+                    src={artSrc}
+                    alt={card.name}
+                    fill
+                    className="object-cover"
+                    sizes="112px"
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-20 bg-gray-800 flex items-center justify-center text-3xl select-none">
+                  {card.type.toUpperCase() === "ATTACK" ? "⚔️" : card.type.toUpperCase() === "SKILL" ? "✨" : "🌀"}
+                </div>
+              )}
+
+              {/* Name + type strip */}
+              <div className="px-1.5 py-1.5 w-full">
+                <span className="text-xs font-semibold text-white text-center leading-tight block">{card.name}</span>
+                <span className="text-[9px] text-gray-400 mt-0.5 text-center block">{card.type}</span>
+              </div>
             </button>
           )
         })}
