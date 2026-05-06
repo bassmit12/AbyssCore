@@ -17,7 +17,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: gateway
-        image: ghcr.io/bassmit12/abysscore-gateway:0084aaa44dafd721e0397b6ac1e1c87546433291
+        image: ghcr.io/bassmit12/abysscore-gateway:1e3931d62063666dfae2cd63e89cfa14f24c30d8
         imagePullPolicy: Always
         resources:
           requests:
