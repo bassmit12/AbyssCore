@@ -17,11 +17,12 @@ A real-time multiplayer dungeon crawler built to showcase a modern Kubernetes-na
 | Auth | Keycloak (OIDC/JWT) |
 | Event Bus | RabbitMQ (topic exchange: `abysscore.events`) |
 | Database | PostgreSQL (per-service databases) |
+| Metrics | Prometheus + Grafana ✅ |
 | Tracing | OpenTelemetry → Jaeger _(planned)_ |
-| Metrics | Prometheus + Grafana _(planned)_ |
-| Infra | Kubernetes (Multistax-managed, 3 nodes) |
+| Infra | Kubernetes (Fontys-managed, 3 nodes) |
+| GitOps | ArgoCD (auto-sync on push to `main`) |
 | Public Access | Cloudflare Tunnel (no LoadBalancer/Ingress, no VPN required) |
-| CI/CD | GitHub Actions → ghcr.io |
+| CI/CD | GitHub Actions → ghcr.io (SHA-tagged images, ArgoCD auto-rollout) |
 
 ## Services
 
@@ -35,15 +36,18 @@ A real-time multiplayer dungeon crawler built to showcase a modern Kubernetes-na
 - **map-service** — Dungeon node graph, hero positions
 - **graphql-gateway** — Unified query surface, WebSocket real-time
 
-## Production Deploy (live cluster)
+## Production Endpoints
 
 | Endpoint | URL |
 |---|---|
-| Frontend | https://abysscore.bassmit.dev |
+| Game | https://abysscore.bassmit.dev |
 | GraphQL Playground | https://abysscore-api.bassmit.dev/playground |
 | Keycloak Admin | https://abysscore-auth.bassmit.dev (admin/admin) |
+| ArgoCD | https://argocd.bassmit.dev |
+| Grafana | https://grafana.bassmit.dev |
 
-Pushing to `main` triggers GitHub Actions to build and push images to ghcr.io. **Currently a manual `kubectl rollout restart` is required afterward** — ArgoCD GitOps is planned next (see PROGRESS.md).
+Pushing to `main` triggers GitHub Actions to build and push images to ghcr.io with SHA tags.
+ArgoCD picks up the manifest change and rolls out automatically — no manual steps needed.
 
 For cluster operations (kubectl), connect to Fontys OpenVPN and use `abysscore_cluster.conf` (gitignored).
 

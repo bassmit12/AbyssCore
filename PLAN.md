@@ -5,7 +5,7 @@
 
 **Goal:** A real-time multiplayer dungeon crawler game that showcases a production-grade Kubernetes stack.
 
-**Cluster status:** ONLINE since 2026-05-02. Multistax-managed Kubernetes (k8s v1.33.1, 3 nodes, 10.1.1.0/24). Reachable via Fontys OpenVPN OR Cloudflare Tunnel (no VPN required). Live at https://abysscore.bassmit.dev.
+**Cluster status:** ONLINE since 2026-05-02. Fontys-managed Kubernetes (k8s v1.33.1, 3 nodes, 10.1.1.0/24). Reachable via Fontys OpenVPN OR Cloudflare Tunnel (no VPN required). Live at https://abysscore.bassmit.dev.
 
 **Track ongoing work in PROGRESS.md** — single source of truth for what's done, what's next, and known pitfalls.
 
@@ -137,13 +137,13 @@
 - [x] **9.5** Encore services: Deployment + Service + ConfigMap per service _(single backend image, infra.config.json baked at build time)_
 - [x] **9.6** GraphQL gateway: Deployment + Service
 - [x] **9.7** Next.js frontend: Deployment + Service + Ingress _(no Ingress — exposed via Cloudflare Tunnel instead)_
-- [ ] **9.8** Prometheus: kube-prometheus-stack Helm chart
-- [ ] **9.9** Grafana: bundled with kube-prometheus-stack, import dashboards via ConfigMap
+- [x] **9.8** Prometheus + Grafana: kube-prometheus-stack v84.5.0, all images mirrored to GHCR, live at grafana.bassmit.dev
+- [ ] **9.9** Custom AbyssCore Grafana dashboard (game-specific panels)
 - [ ] **9.10** OpenTelemetry Collector: DaemonSet or Deployment
 - [ ] **9.11** Cilium network policies: restrict inter-service traffic (only game-service publishes to RabbitMQ, etc.)
 - [ ] **9.12** Cilium L7 visibility policy for GraphQL traffic inspection
 - [ ] **9.13** Horizontal Pod Autoscaler on combat-service (spikes during boss fights)
-- [ ] **9.14** ArgoCD Application manifest (if using GitOps like KubePulse) _(planned next — see PROGRESS.md)_
+- [x] **9.14** ArgoCD: 3 Applications (abysscore, monitoring, monitoring-extras), all Synced/Healthy. UI at argocd.bassmit.dev.
 - [x] **9.15** Cloudflare Tunnel pod (cloudflared) — public exposure without LoadBalancer/Ingress, no VPN required
 - [x] **9.16** GitHub Actions CI: build + push backend/gateway/frontend images to ghcr.io on push to main
 - [x] **9.17** ghcr.io image pull secret (`ghcr-secret`) provisioned in cluster

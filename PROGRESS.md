@@ -3,13 +3,13 @@
 > Live operational status. PLAN.md = what to build. PROGRESS.md = what's deployed, what broke, what's next.
 
 **Production URL:** https://abysscore.bassmit.dev
-**Last updated:** 2026-05-03
+**Last updated:** 2026-05-06
 
 ---
 
 ## Current Status
 
-✅ **App is LIVE on the public internet.** Login (testplayer / password) works, hero creation flow reaches the database.
+✅ **App is LIVE on the public internet.** Login (testplayer / password) works, hero creation → combat flow is functional. Card artwork for Ball Lightning and Chaos Theory is live. Version badge in header shows commit SHA.
 
 ### Deployed Components
 
@@ -22,48 +22,50 @@
 | GraphQL gateway | ✅ Running | Port 4001, playground at `/playground` |
 | Next.js frontend | ✅ Running | Port 3000, NextAuth + Keycloak |
 | Cloudflared tunnel | ✅ Running | 2 replicas, dialing out to Cloudflare edge (Amsterdam) |
+| ArgoCD | ✅ Running | 3 Applications (abysscore, monitoring, monitoring-extras), all Synced/Healthy |
+| Prometheus + Grafana | ✅ Running | kube-prometheus-stack v84.5.0, all pods healthy |
 
 ### Public Hostnames (Cloudflare Tunnel)
 
 | Subdomain | Routes To | Use |
 |---|---|---|
-| https://abysscore.bassmit.dev | abysscore-frontend.abysscore.svc.cluster.local:3000 | Game UI |
-| https://abysscore-api.bassmit.dev | abysscore-gateway.abysscore.svc.cluster.local:4001 | GraphQL playground |
-| https://abysscore-auth.bassmit.dev | keycloak.abysscore.svc.cluster.local:8080 | Keycloak admin (admin/admin) |
+| https://abysscore.bassmit.dev | frontend:3000 | Game UI |
+| https://abysscore-api.bassmit.dev | gateway:4001 | GraphQL playground |
+| https://abysscore-auth.bassmit.dev | keycloak:8080 | Keycloak admin (admin/admin) |
+| https://argocd.bassmit.dev | argocd-server:80 | GitOps dashboard |
+| https://grafana.bassmit.dev | kube-prometheus-stack-grafana:80 | Metrics dashboard |
 
 ---
 
 ## Cluster Access
 
 **Kubeconfig:** `abysscore_cluster.conf` at project root (gitignored — DO NOT commit).
+**Cluster:** Fontys-managed Kubernetes (k8s v1.33.1, 3 nodes). Node IP: 10.1.1.158.
 **VPN required for kubectl?** Yes (Fontys OpenVPN). Cloudflare Tunnel makes the *app* public, but kubectl talks to the API server on the private subnet.
 
 ```bash
 KUBECONFIG="/mnt/d/Fontys/Personal Project/AbyssCore/abysscore_cluster.conf" kubectl get pods -n abysscore
 ```
 
-⚠️ **Known leak:** the kubeconfig was committed to git history (commit 004f076) before being removed. The cert is still valid until rotated. Multistax-managed certs aren't trivially rotatable — flag for supervisor or accept the risk on this dev cluster.
+⚠️ **Known leak:** the kubeconfig was committed to git history (commit 004f076) before being removed. The cert is still valid until rotated. Flag for supervisor or accept the risk on this dev cluster.
 
 ---
 
 ## CI/CD (current state)
 
-**Automated** (GitHub Actions on push to `main`):
-1. Build backend image → push to `ghcr.io/bassmit12/abysscore-backend:latest`
-2. Build gateway image → push to `ghcr.io/bassmit12/abysscore-gateway:latest`
-3. Build frontend image → push to `ghcr.io/bassmit12/abysscore-frontend:latest`
+**Fully automated** (GitHub Actions on push to `main`):
 
-The frontend build bakes `NEXT_PUBLIC_*` URLs into the image — these are hardcoded in `.github/workflows/build-push.yml`. If hostnames change, edit the workflow.
+1. Build backend image → push `ghcr.io/bassmit12/abysscore-backend:<sha>` + `:latest`
+2. Build gateway image → push `ghcr.io/bassmit12/abysscore-gateway:<sha>` + `:latest`
+3. Build frontend image → push `ghcr.io/bassmit12/abysscore-frontend:<sha>` + `:latest`
+4. `update-manifests` job patches `infra/k8s/*.yaml` with the new SHA tag and commits back to git
+5. ArgoCD detects the manifest change and rolls out the new images automatically
 
-**Auth:** uses repo secret `CR_PAT` (PAT with `write:packages` scope). `GITHUB_TOKEN` was unreliable for first-time package creation.
+**No manual steps needed** — pushing to `main` is the full deploy.
 
-**Manual** (must run after CI):
-```bash
-KUBECONFIG=... kubectl rollout restart deployment/abysscore-backend -n abysscore
-KUBECONFIG=... kubectl rollout restart deployment/abysscore-frontend -n abysscore
-KUBECONFIG=... kubectl rollout restart deployment/abysscore-gateway -n abysscore
-```
-Without rollout restart, k8s caches the `:latest` tag and won't pull the new digest.
+The `paths-ignore: infra/k8s/**` filter on the trigger prevents the manifest-update commit from triggering a new build (infinite loop fix).
+
+**Auth:** uses repo secret `GHCR_TOKEN` (PAT with `write:packages` scope). `GITHUB_TOKEN` fails 403 for new packages.
 
 **DB migrations:** completely manual. See "How to apply migrations" below.
 
@@ -71,24 +73,29 @@ Without rollout restart, k8s caches the `:latest` tag and won't pull the new dig
 
 ## Next Up
 
-### 1. ArgoCD (planned)
-Replace the manual `rollout restart` step with GitOps reconciliation.
-- Install ArgoCD into `argocd` namespace
-- Expose UI at `argocd.bassmit.dev` via the existing tunnel
-- Create Application pointing at `infra/k8s/` in this repo
-- Configure auto-sync + image updater for `:latest` rollouts on new digests
+### 1. Application metrics
+- Add `"metrics": {"type": "prometheus"}` to backend `infra.config.json`
+- Add `promhttp.Handler()` at `/metrics` in the gateway
+- ServiceMonitors already exist — once the endpoints return real data, Grafana will pick it up
 
-### 2. Production hardening
-- RabbitMQ Cluster Operator instead of plain `guest:guest` Deployment
-- Replace hardcoded secrets (`abysscore:abysscore`, `dev-secret-change-in-prod`) with k8s Secrets / sealed-secrets
-- Postgres backups
-- Resource limits/requests on all deployments
+### 2. Custom Grafana dashboard
+- AbyssCore-specific panels: dungeons created, combats resolved, queue depth, API latency per service
 
-### 3. Observability stack (Phase 6/7 of PLAN.md)
-- kube-prometheus-stack Helm chart
-- Jaeger operator
-- OpenTelemetry collector
-- Wire `OTEL_EXPORTER_OTLP_ENDPOINT` env var to point at the collector instead of `localhost:4317`
+### 3. Alerting
+- Alertmanager is deployed but has no routing rules
+- Basic alerts: pod restarts, high memory, service unavailability
+
+### 4. Log aggregation
+- Loki stack for historical log search and correlation with metrics
+
+### 5. HPA for backend and gateway
+- CPU target ~70%, min 1 replica, max 5
+- Resource requests already defined on all Deployments ✅
+
+### 6. Test environment (develop branch)
+- Two branches (`develop` → `main`), two namespaces (`abysscore-test` → `abysscore`)
+- Kustomize overlays for per-environment patches
+- Separate Cloudflare hostnames for test (`test.abysscore.bassmit.dev`)
 
 ---
 
@@ -118,51 +125,50 @@ for svc, db in services.items():
         print(f"[OK] {svc}/{f}")
 ```
 
-Migrations are idempotent if written with `IF NOT EXISTS` / `IF EXISTS`. Re-running on an already-migrated DB is safe but each migration must be idempotent.
+Migrations are idempotent if written with `IF NOT EXISTS` / `IF EXISTS`. Re-running on an already-migrated DB is safe.
 
 ---
 
 ## Known Issues / Pitfalls (project-specific)
 
-### Fontys cluster TLS interception breaks Docker Hub pulls
+### Fontys cluster TLS interception breaks external registry pulls
 
-The Fontys network does TLS inspection with rotating "Elsevier" / "Buyerzone" certs. Pulls from `docker.io` randomly fail with `tls: failed to verify certificate: x509: certificate is valid for *.elsst.com, not registry-1.docker.io`.
+The Fontys network does TLS inspection. Pulls from `docker.io`, `quay.io`, etc. fail with x509 cert errors.
 
-**Workaround:** mirror third-party images to ghcr.io. Done for `cloudflare/cloudflared` → `ghcr.io/bassmit12/cloudflared:latest`.
-
-For init containers that just need to wait for Postgres: just remove them. Postgres is up in seconds and Encore retries connect.
+**Workaround:** mirror every image to ghcr.io. All app images and kube-prometheus-stack images are mirrored to `ghcr.io/bassmit12/`. Any new image used in the cluster must be mirrored first.
 
 ### Encore Container PORT defaults to 8080
-`encore build docker` images listen on 8080 unless `PORT` env is set. Backend Service expects port 4000, so set `PORT=4000` on the Deployment.
+`encore build docker` images listen on 8080 unless `PORT` env is set. Set `PORT=4000` on the backend Deployment.
 
 ### Encore infra.config.json schema
-- `username` / `password` are **plain strings** or `{"$env": "VAR"}` — NOT `{"value": "..."}`. Wrong schema makes Encore parse the struct as a connection string and fail with `password authentication failed for user "password="`.
+- `username` / `password` are **plain strings** or `{\"$env\": \"VAR\"}` — NOT `{\"value\": \"...\"}`.
 - `databases` map keys = literal Postgres database names. Each DB must exist.
 
 ### Next.js standalone HOSTNAME
-Standalone build defaults to listening on the pod hostname only. Set `HOSTNAME=0.0.0.0` and `PORT=3000` in the Dockerfile, or `kubectl port-forward` will fail with `connection refused`.
+Standalone build defaults to listening on the pod hostname only. Set `HOSTNAME=0.0.0.0` and `PORT=3000` in the Dockerfile.
+
+### Next.js `next/image` with `fill` broken in standalone builds
+Use plain `<img>` tags for local public assets (`/cards/*.png`). The `fill` prop on `next/image` breaks in standalone mode.
 
 ### NextAuth in k8s
-- Set `AUTH_TRUST_HOST=true` (or `NEXTAUTH_URL`) — without it, NextAuth refuses to handle requests from non-localhost hostnames.
-- `NEXTAUTH_SECRET` and `KEYCLOAK_*` env vars are read at runtime — must be in the Deployment, not just `.env.local`.
+- Set `AUTH_TRUST_HOST=true` — without it, NextAuth refuses non-localhost hostnames.
+- `NEXTAUTH_SECRET` and `KEYCLOAK_*` must be in the Deployment env, not just `.env.local`.
 
 ### Keycloak behind Cloudflare Tunnel
-Need `KC_HOSTNAME=<public-host>`, `KC_HOSTNAME_STRICT=false`, `KC_HOSTNAME_STRICT_HTTPS=false`, `KC_PROXY=edge` so OIDC discovery returns the public URL and Keycloak trusts the X-Forwarded-* headers from cloudflared.
+Need `KC_HOSTNAME=<public-host>`, `KC_HOSTNAME_STRICT=false`, `KC_HOSTNAME_STRICT_HTTPS=false`, `KC_PROXY=edge`.
 
 ### Backend KEYCLOAK_ISSUER
-The Encore auth handler reads `KEYCLOAK_ISSUER` at runtime to fetch JWKS. Must point at the **public** issuer URL since tokens are issued with that as the `iss` claim. Set on backend Deployment.
+Must point at the **public** issuer URL (tokens are issued with that as the `iss` claim).
 
-### Image deployments are stuck on `bassmit123/...` Docker Hub paths in some manifests
-Some old manifests still referenced an unrelated `bassmit123/...` Docker Hub repo. All have been corrected to `ghcr.io/bassmit12/...`. If a deploy ever falls back to Docker Hub, re-apply the YAML manifest from `infra/k8s/`.
+### CI infinite loop from manifest-update job
+The `update-manifests` job commits back to `main`. Without `paths-ignore: infra/k8s/**` on the trigger, this causes infinite build loops. Fixed — do not remove that filter.
+
+### GHCR_TOKEN vs GITHUB_TOKEN
+`GITHUB_TOKEN` fails 403 for first-time package creation. Always use `GHCR_TOKEN` (PAT with `write:packages`).
 
 ---
 
 ## Operational Recipes
-
-### Force-pull new `:latest` image
-```bash
-kubectl rollout restart deployment/abysscore-frontend -n abysscore
-```
 
 ### Check what image a pod is running
 ```bash
@@ -194,8 +200,14 @@ kubectl create secret docker-registry ghcr-secret \
 
 | Date | Event |
 |---|---|
-| 2026-05-02 | Cluster came online (Multistax). Initial deploy via kubectl apply. |
-| 2026-05-02 | GitHub Actions CI configured for image builds. |
+| 2026-05-02 | Cluster came online (Fontys-managed). Initial deploy via kubectl apply. |
+| 2026-05-02 | GitHub Actions CI configured for image builds (ghcr.io). |
 | 2026-05-03 | Cloudflare Tunnel deployed, public URLs live. |
 | 2026-05-03 | Encore infra.config.json schema fix + 7-DB postgres setup + migrations applied. |
 | 2026-05-03 | Full end-to-end auth → hero creation flow verified working. |
+| 2026-05-03 | ArgoCD deployed, 3 Applications Synced/Healthy. |
+| 2026-05-03 | kube-prometheus-stack deployed, all images mirrored to GHCR. Grafana live. |
+| 2026-05-04 | CI switched to SHA-tagged images + update-manifests job for ArgoCD auto-rollout. |
+| 2026-05-04 | Card artwork (Ball Lightning, Chaos Theory, draw pile) added to frontend. |
+| 2026-05-04 | Version badge (commit SHA) added to frontend header. |
+| 2026-05-06 | Cards shown as full art assets (no wrapper). CI infinite loop fixed with paths-ignore. |
