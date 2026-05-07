@@ -4,6 +4,7 @@ metadata:
   name: cloudflared
   namespace: abysscore
 spec:
+  revisionHistoryLimit: 1
   replicas: 2
   selector:
     matchLabels:
