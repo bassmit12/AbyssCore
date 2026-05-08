@@ -25,11 +25,11 @@ jobs:
 
       - name: Generate Mermaid diagram
         run: |
-          python scripts/k8s-mermaid.py infra/k8s/*.yaml > docs/architecture.mmd
+          mkdir -p docs
+          python scripts/k8s-mermaid.py infra/k8s/*.yaml -o docs/architecture.mmd --quiet
 
       - name: Inject into README
         run: |
-          # Replace content between mermaid fences in README
           python3 - <<'EOF'
           import re, pathlib
 
@@ -38,7 +38,6 @@ jobs:
 
           block = f"<!-- MERMAID_START -->\n```mermaid\n{mmd}\n```\n<!-- MERMAID_END -->"
 
-          # Replace existing block or append
           pattern = r"<!-- MERMAID_START -->.*?<!-- MERMAID_END -->"
           if re.search(pattern, readme, re.DOTALL):
               readme = re.sub(pattern, block, readme, flags=re.DOTALL)

@@ -1,0 +1,96 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, ci/linting-security]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run weekly on Monday at 08:00 UTC to catch new CVEs
+    - cron: '0 8 * * 1'
+
+jobs:
+  trivy-image:
+    name: Trivy Image Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    strategy:
+      matrix:
+        image:
+          - name: frontend
+            context: frontend
+            dockerfile: frontend/Dockerfile
+          - name: gateway
+            context: gateway
+            dockerfile: gateway/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image for scanning
+        run: |
+          docker build \
+            -f ${{ matrix.image.dockerfile }} \
+            -t abysscore-${{ matrix.image.name }}:scan \
+            ${{ matrix.image.context }}
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: abysscore-${{ matrix.image.name }}:scan
+          format: sarif
+          output: trivy-${{ matrix.image.name }}.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'  # don't fail build, just report
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.image.name }}.sarif
+          category: trivy-${{ matrix.image.name }}
+
+  trivy-manifests:
+    name: Trivy Manifest Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy config scan (k8s manifests)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: infra/k8s
+          format: sarif
+          output: trivy-config.sarif
+          exit-code: '0'
+
+      - name: Upload results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-config.sarif
+          category: trivy-config
+
+  checkov:
+    name: Checkov IaC Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkov k8s manifests
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infra/k8s
+          framework: kubernetes
+          output_format: sarif
+          output_file_path: checkov.sarif
+          soft_fail: true  # don't block builds, report only
+
+      - name: Upload Checkov results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: checkov.sarif
+          category: checkov
