@@ -22,8 +22,8 @@ jobs:
             context: frontend
             dockerfile: frontend/Dockerfile
           - name: gateway
-            context: gateway
-            dockerfile: gateway/Dockerfile
+            context: graphql-gateway
+            dockerfile: graphql-gateway/Dockerfile
     steps:
       - uses: actions/checkout@v4
 

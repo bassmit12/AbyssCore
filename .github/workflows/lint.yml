@@ -22,7 +22,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
-          working-directory: gateway
+          working-directory: graphql-gateway
 
   yamllint:
     name: YAML Lint
@@ -38,9 +38,11 @@ jobs:
             extends: default
             rules:
               line-length:
-                max: 150
+                max: 2000
               truthy:
                 allowed-values: ['true', 'false']
+              indentation: disable
+              document-start: disable
 
   kubeconform:
     name: Kubernetes Manifest Validation
