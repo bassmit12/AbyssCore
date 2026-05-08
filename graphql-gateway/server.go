@@ -6,6 +6,7 @@ import (
 
 	"github.com/graph-gophers/graphql-go"
 	"github.com/graph-gophers/graphql-go/relay"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 func corsMiddleware(next http.Handler) http.Handler {
@@ -32,8 +33,8 @@ func NewServer() http.Handler {
 	)
 
 	mux := http.NewServeMux()
-	mux.Handle("/graphql", authMiddleware(&relay.Handler{Schema: schema}))
-	mux.Handle("/playground", playgroundHandler())
+	mux.Handle("/graphql", otelhttp.NewHandler(authMiddleware(&relay.Handler{Schema: schema}), "graphql"))
+	mux.Handle("/playground", otelhttp.NewHandler(playgroundHandler(), "playground"))
 
 	return corsMiddleware(mux)
 }

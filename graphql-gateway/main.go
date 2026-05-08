@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +14,16 @@ func playgroundHandler() http.Handler {
 }
 
 func main() {
+	ctx := context.Background()
+
+	shutdown, err := initTracer(ctx)
+	if err != nil {
+		log.Printf("Warning: failed to init OTEL tracer: %v", err)
+	} else {
+		defer shutdown()
+		log.Println("OTEL tracer initialized")
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "4001"
