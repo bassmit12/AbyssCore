@@ -1,0 +1,157 @@
+digraph {
+	graph [fontcolor="#2D3436" fontname="Sans-Serif" fontsize=15 label="" nodesep=0.60 pad=2.0 rankdir=TB ranksep=0.75 splines=ortho]
+	node [fixedsize=true fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 height=1.4 imagescale=true labelloc=b shape=box style=rounded width=1.4]
+	edge [color="#7B8894"]
+	"470d70dba4014e6fb7d7f54789b81b2c" [label=abysscore height=1.9 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/group/ns.png" shape=none tooltip="kind: Namespace
+apiVersion: v1
+metadata:
+  name: abysscore
+..."]
+	subgraph "cluster_Namespace: argocd" {
+		graph [bgcolor=white fontname="Sans-Serif" fontsize=12 label=<<table border="0" width="100%"><tr><td fixedsize="true" width="64" height="64"><img src="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/group/ns.png" /></td></tr><tr><td>argocd</td></tr></table>> labeljust=l pencolor=black rankdir=LR shape=box style="rounded,dashed" tooltip="Namespace: argocd"]
+		"5bf3fb50af5443d5ba13feaecd08f5c8" [label=abysscore height=1.9 image="/home/bas/.local/lib/python3.10/site-packages/resources/aws/enablement/managed-services.png" shape=none tooltip="kind: Application
+apiVersion: argoproj.io/v1alpha1
+metadata:
+  name: abysscore
+..."]
+	}
+	subgraph "cluster_Namespace: abysscore" {
+		graph [bgcolor=white fontname="Sans-Serif" fontsize=12 label=<<table border="0" width="100%"><tr><td fixedsize="true" width="64" height="64"><img src="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/group/ns.png" /></td></tr><tr><td>abysscore</td></tr></table>> labeljust=l pencolor=black rankdir=LR shape=box style="rounded,dashed" tooltip="Namespace: abysscore"]
+		b0c7ba685cd941d19825daefd492637c [label="abysscore
+-backend" height=2.3 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/compute/deploy.png" shape=none tooltip="kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: abysscore-backend
+..."]
+		dffb8b446e3a4bf983b4c14804e91df0 [label=cloudflared height=1.9 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/compute/deploy.png" shape=none tooltip="kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: cloudflared
+..."]
+		"91c2b5827f7f447ea9d2373fefa2ee58" [label="encore-infra
+-config" height=2.3 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/podconfig/cm.png" shape=none tooltip="kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: encore-infra-config
+..."]
+		"35b11a78ed434e9faaea536213deee7a" [label="abysscore
+-frontend" height=2.3 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/compute/deploy.png" shape=none tooltip="kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: abysscore-frontend
+..."]
+		ff10f45a8a584b7182726acbf718e5e8 [label="abysscore
+-gateway" height=2.3 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/compute/deploy.png" shape=none tooltip="kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: abysscore-gateway
+..."]
+		fdf7353f25a74195984387665f92ee86 [label="keycloak-init
+-script" height=2.3 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/podconfig/cm.png" shape=none tooltip="kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: keycloak-init-script
+..."]
+		bff6e45f3f374451b352c00a6ab6b06d [label="keycloak-realm
+-init" height=2.3 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/compute/job.png" shape=none tooltip="kind: Job
+apiVersion: batch/v1
+metadata:
+  name: keycloak-realm-init
+..."]
+		df6273f9f6584049bf64caacf6517b85 [label="keycloak-lb" height=1.9 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/network/svc.png" shape=none tooltip="kind: Service
+apiVersion: v1
+metadata:
+  name: keycloak-lb
+..."]
+		"6e67b89ada0348049532953bb6d506ca" [label=keycloak height=1.9 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/compute/deploy.png" shape=none tooltip="kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: keycloak
+..."]
+		"779c476e204440469d6c61ed2b288019" [label=keycloak height=1.9 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/network/svc.png" shape=none tooltip="kind: Service
+apiVersion: v1
+metadata:
+  name: keycloak
+..."]
+		c835694e0202458aac4b9975422efd4d [label="postgres-init
+-scripts" height=2.3 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/podconfig/cm.png" shape=none tooltip="kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: postgres-init-scripts
+..."]
+		b7e0e82434e84a5798cd201f0270cf41 [label="postgres-pvc" height=1.9 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/storage/pvc.png" shape=none tooltip="kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: postgres-pvc
+..."]
+		c387e00e6d7840d9bc169794af95961a [label=postgres height=1.9 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/compute/deploy.png" shape=none tooltip="kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: postgres
+..."]
+		"4250ff562ecd4e9ab4cdd308a1857c2f" [label=postgres height=1.9 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/network/svc.png" shape=none tooltip="kind: Service
+apiVersion: v1
+metadata:
+  name: postgres
+..."]
+		d67294736510469e90a20e64640ddfc0 [label=rabbitmq height=1.9 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/compute/deploy.png" shape=none tooltip="kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: rabbitmq
+..."]
+		"7050150216704407b35cbc5fe8b0b5f7" [label=rabbitmq height=1.9 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/network/svc.png" shape=none tooltip="kind: Service
+apiVersion: v1
+metadata:
+  name: rabbitmq
+..."]
+		subgraph "cluster_Application: abysscore-backend" {
+			graph [bgcolor="#ECE8F6" fontname="Sans-Serif" fontsize=12 label="Application: abysscore-backend" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded tooltip="Application: abysscore-backend"]
+			"9f8922993d2f4e8ab202ee9cde498ef5" [label="abysscore
+-backend" height=2.3 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/network/svc.png" shape=none tooltip="kind: Service
+apiVersion: v1
+metadata:
+  name: abysscore-backend
+..."]
+		}
+		subgraph "cluster_Application: abysscore-frontend" {
+			graph [bgcolor="#ECE8F6" fontname="Sans-Serif" fontsize=12 label="Application: abysscore-frontend" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded tooltip="Application: abysscore-frontend"]
+			ac843960740545738d92c6d052bf8eda [label="abysscore
+-frontend" height=2.3 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/network/svc.png" shape=none tooltip="kind: Service
+apiVersion: v1
+metadata:
+  name: abysscore-frontend
+..."]
+		}
+		subgraph "cluster_Application: abysscore-gateway" {
+			graph [bgcolor="#ECE8F6" fontname="Sans-Serif" fontsize=12 label="Application: abysscore-gateway" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded tooltip="Application: abysscore-gateway"]
+			"099b07f01ead4b3695e1571cd82f6929" [label="abysscore
+-gateway" height=2.3 image="/home/bas/.local/lib/python3.10/site-packages/resources/k8s/network/svc.png" shape=none tooltip="kind: Service
+apiVersion: v1
+metadata:
+  name: abysscore-gateway
+..."]
+		}
+	}
+	"9f8922993d2f4e8ab202ee9cde498ef5" -> b0c7ba685cd941d19825daefd492637c [color=black dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=10 style=dashed tooltip="spec.selector:
+  app: abysscore-backend" xlabel="4000/TCP"]
+	ac843960740545738d92c6d052bf8eda -> "35b11a78ed434e9faaea536213deee7a" [color=black dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=10 style=dashed tooltip="spec.selector:
+  app: abysscore-frontend" xlabel="3000/TCP"]
+	"099b07f01ead4b3695e1571cd82f6929" -> ff10f45a8a584b7182726acbf718e5e8 [color=black dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=10 style=dashed tooltip="spec.selector:
+  app: abysscore-gateway" xlabel="4001/TCP"]
+	bff6e45f3f374451b352c00a6ab6b06d -> fdf7353f25a74195984387665f92ee86 [color=black dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 tooltip="spec.template.spec.volumes[0].configMap:
+  defaultMode: 493
+  name: keycloak-init-script"]
+	df6273f9f6584049bf64caacf6517b85 -> "6e67b89ada0348049532953bb6d506ca" [color=black dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=10 style=dashed tooltip="spec.selector:
+  app: keycloak" xlabel="8080/TCP"]
+	"779c476e204440469d6c61ed2b288019" -> "6e67b89ada0348049532953bb6d506ca" [color=black dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=10 style=dashed tooltip="spec.selector:
+  app: keycloak" xlabel="8080/TCP"]
+	c387e00e6d7840d9bc169794af95961a -> b7e0e82434e84a5798cd201f0270cf41 [color=black dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 tooltip="spec.template.spec.volumes[0].persistentVolumeClaim:
+  claimName: postgres-pvc"]
+	c387e00e6d7840d9bc169794af95961a -> c835694e0202458aac4b9975422efd4d [color=black dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 tooltip="spec.template.spec.volumes[1].configMap:
+  name: postgres-init-scripts"]
+	"4250ff562ecd4e9ab4cdd308a1857c2f" -> c387e00e6d7840d9bc169794af95961a [color=black dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=10 style=dashed tooltip="spec.selector:
+  app: postgres" xlabel="5432/TCP"]
+	"7050150216704407b35cbc5fe8b0b5f7" -> d67294736510469e90a20e64640ddfc0 [color=black dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=10 style=dashed tooltip="spec.selector:
+  app: rabbitmq" xlabel="5672/TCP
+15672/TCP"]
+}

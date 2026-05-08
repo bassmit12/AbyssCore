@@ -1,0 +1,57 @@
+name: Update Architecture Diagram
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/k8s/**'
+
+permissions:
+  contents: write
+
+jobs:
+  generate-diagram:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Generate Mermaid diagram
+        run: |
+          python scripts/k8s-mermaid.py infra/k8s/*.yaml > docs/architecture.mmd
+
+      - name: Inject into README
+        run: |
+          # Replace content between mermaid fences in README
+          python3 - <<'EOF'
+          import re, pathlib
+
+          mmd = pathlib.Path("docs/architecture.mmd").read_text()
+          readme = pathlib.Path("README.md").read_text()
+
+          block = f"<!-- MERMAID_START -->\n```mermaid\n{mmd}\n```\n<!-- MERMAID_END -->"
+
+          # Replace existing block or append
+          pattern = r"<!-- MERMAID_START -->.*?<!-- MERMAID_END -->"
+          if re.search(pattern, readme, re.DOTALL):
+              readme = re.sub(pattern, block, readme, flags=re.DOTALL)
+          else:
+              readme += f"\n\n## Architecture\n\n{block}\n"
+
+          pathlib.Path("README.md").write_text(readme)
+          EOF
+
+      - name: Commit updated diagram
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/architecture.mmd README.md
+          git diff --cached --quiet || git commit -m "docs: auto-update architecture diagram [skip ci]"
+          git push
