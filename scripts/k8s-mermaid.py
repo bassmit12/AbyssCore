@@ -362,8 +362,8 @@ def main():
   python k8s-mermaid.py input.yaml -o diagram.mmd
   python k8s-mermaid.py input.yaml --include-labels"""
     )
-    
-    parser.add_argument('yaml_file', help='Input Kubernetes YAML file')
+    parser = argparse.ArgumentParser(description='Generate Mermaid diagram from Kubernetes YAML files')
+    parser.add_argument('yaml_file', nargs='+', help='Path to one or more Kubernetes YAML files')
     parser.add_argument('-o', '--output', 
                        help='Output file (default: output_class.mmd)',
                        default='output_class.mmd')
@@ -377,21 +377,31 @@ def main():
     args = parser.parse_args()
     
     try:
+        # Merge all files: concatenate multi-doc YAMLs into one temp file
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as tmp:
+            for f in args.yaml_file:
+                with open(f) as fh:
+                    tmp.write(fh.read())
+                    tmp.write('\n---\n')
+            tmp_path = tmp.name
+
         mermaid_diagram = generate_mermaid_classdiagram_from_yaml(
-            args.yaml_file, 
+            tmp_path,
             include_labels=args.include_labels
         )
-        
+        os.unlink(tmp_path)
+
         if mermaid_diagram.strip() == "classDiagram":
             print("Error: No valid Kubernetes resources found", file=sys.stderr)
             sys.exit(1)
-            
+
         if not args.quiet:
             print(mermaid_diagram)
-            
+
         with open(args.output, 'w') as f:
             f.write(mermaid_diagram)
-            
+
         if not args.quiet:
             print(f"\nDiagram saved to: {args.output}", file=sys.stderr)
             

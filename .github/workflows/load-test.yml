@@ -1,0 +1,39 @@
+name: Load Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL (default: production gateway)'
+        required: false
+        default: 'https://abysscore-api.bassmit.dev'
+  # Also run after a successful deploy on main
+  workflow_run:
+    workflows: ["Build and Push"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  k6:
+    name: k6 Load Test
+    runs-on: ubuntu-latest
+    # Only run if the triggering workflow succeeded (for workflow_run trigger)
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run k6 load test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: scripts/k6/load-test.js
+        env:
+          TARGET_URL: ${{ github.event.inputs.target_url || 'https://abysscore-api.bassmit.dev' }}
+
+      - name: Upload k6 results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-results
+          path: summary.json
+          retention-days: 30
