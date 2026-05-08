@@ -1,6 +1,6 @@
 module abysscore/graphql-gateway
 
-go 1.25.0
+go 1.23.0
 
 require (
 	github.com/99designs/gqlgen v0.17.55
