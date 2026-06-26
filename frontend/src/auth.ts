@@ -1,5 +1,4 @@
 import NextAuth from "next-auth"
-import KeycloakProvider from "next-auth/providers/keycloak"
 
 async function refreshAccessToken(token: any) {
   try {
@@ -40,12 +39,16 @@ async function refreshAccessToken(token: any) {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
-    KeycloakProvider({
+    {
+      id: "keycloak",
+      name: "Keycloak",
+      type: "oidc",
       clientId: process.env.KEYCLOAK_CLIENT_ID!,
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET ?? "",
       issuer: process.env.KEYCLOAK_ISSUER,
-      wellKnown: process.env.KEYCLOAK_WELL_KNOWN || undefined,
-    }),
+      wellKnown: process.env.KEYCLOAK_WELL_KNOWN || `${process.env.KEYCLOAK_ISSUER}/.well-known/openid-configuration`,
+      style: { logo: "/keycloak.svg", bg: "#fff", text: "#000" },
+    },
   ],
   callbacks: {
     async jwt({ token, account }) {
