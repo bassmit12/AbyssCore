@@ -38,8 +38,6 @@ spec:
           value: abysscore
         - name: KC_DB_PASSWORD
           value: abysscore
-        - name: KC_HOSTNAME
-          value: "abysscore-auth.bassmit.dev"
         - name: KC_HOSTNAME_URL
           value: "https://abysscore-auth.bassmit.dev"
         - name: KC_HOSTNAME_STRICT
