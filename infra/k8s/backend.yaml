@@ -34,6 +34,8 @@ spec:
           value: "amqp://guest:guest@rabbitmq:5672/"
         - name: KEYCLOAK_ISSUER
           value: "https://abysscore-auth.bassmit.dev/realms/abysscore"
+        - name: KEYCLOAK_JWKS_URL
+          value: "http://keycloak:8080/realms/abysscore/protocol/openid-connect/certs"
         ports:
         - containerPort: 4000
 ---

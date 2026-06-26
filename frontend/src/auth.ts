@@ -44,6 +44,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.KEYCLOAK_CLIENT_ID!,
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET ?? "",
       issuer: process.env.KEYCLOAK_ISSUER,
+      wellKnown: process.env.KEYCLOAK_WELL_KNOWN || undefined,
     }),
   ],
   callbacks: {

@@ -36,11 +36,14 @@ func getJWKS() (keyfunc.Keyfunc, error) {
 	if jwks != nil {
 		return jwks, nil
 	}
-	issuer := getIssuer()
-	if issuer == "" {
-		return nil, errors.New("KEYCLOAK_ISSUER env var is required")
+	url := os.Getenv("KEYCLOAK_JWKS_URL")
+	if url == "" {
+		issuer := getIssuer()
+		if issuer == "" {
+			return nil, errors.New("KEYCLOAK_ISSUER env var is required")
+		}
+		url = fmt.Sprintf("%s/protocol/openid-connect/certs", issuer)
 	}
-	url := fmt.Sprintf("%s/protocol/openid-connect/certs", issuer)
 	k, err := keyfunc.NewDefaultCtx(context.Background(), []string{url})
 	if err != nil {
 		return nil, err

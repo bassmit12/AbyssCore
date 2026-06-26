@@ -44,6 +44,8 @@ spec:
           value: "abysscore-secret"
         - name: KEYCLOAK_ISSUER
           value: "https://abysscore-auth.bassmit.dev/realms/abysscore"
+        - name: KEYCLOAK_WELL_KNOWN
+          value: "http://keycloak:8080/realms/abysscore/.well-known/openid-configuration"
         ports:
         - containerPort: 3000
 ---
